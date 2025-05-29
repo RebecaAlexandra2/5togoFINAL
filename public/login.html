@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <title>Autentificare • 5 to go</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Segoe+UI:700,400&display=swap">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f5f0e6, #d6b983);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #6f4e37;
+      padding: 15px 30px;
+      color: #fff;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.16);
+    }
+    header img {
+      height: 42px;
+      vertical-align: middle;
+      filter: drop-shadow(1px 1px 1px #c9a66b);
+    }
+    main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 70vh;
+    }
+    .login-container {
+      background: #fff8e1;
+      border-radius: 24px;
+      box-shadow: 0 8px 28px rgba(214, 185, 131, 0.18);
+      padding: 42px 32px 30px 32px;
+      max-width: 420px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 35px auto;
+    }
+    .login-container h2 {
+      margin-top: 0;
+      margin-bottom: 18px;
+      color: #6f4e37;
+      font-weight: 900;
+      letter-spacing: 2px;
+      font-size: 2rem;
+      text-align: center;
+    }
+    .login-container form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .login-container input {
+      border: none;
+      outline: none;
+      border-radius: 14px;
+      background: #f9eec8;
+      padding: 13px 15px;
+      font-size: 1rem;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 8px #d6b98344;
+      color: #4a2f1a;
+      font-weight: 600;
+      transition: box-shadow 0.2s;
+    }
+    .login-container input:focus {
+      box-shadow: 0 0 0 2px #d6b98399;
+    }
+    .login-container button {
+      background: #d69f6b;
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 12px 0;
+      font-weight: 700;
+      font-size: 1.13rem;
+      letter-spacing: 1px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.25s;
+      box-shadow: 0 6px 14px #d6b98355;
+    }
+    .login-container button:hover {
+      background: #b87f4e;
+    }
+    .login-container .error-msg {
+      color: #d66a6a;
+      background: #fff4ec;
+      padding: 8px 13px;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 4px;
+      font-size: 1rem;
+    }
+    .login-container .alt-link {
+      margin-top: 18px;
+      text-align: center;
+      font-size: 1rem;
+      color: #8e693f;
+    }
+    .login-container .alt-link a {
+      color: #b87f4e;
+      text-decoration: none;
+      font-weight: bold;
+      margin-left: 6px;
+      transition: color 0.2s;
+    }
+    .login-container .alt-link a:hover {
+      color: #6f4e37;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="logo.jpg" alt="5 to go" />
+  </header>
+  <main>
+    <div class="login-container">
+      <h2>Autentificare</h2>
+      <form id="loginForm">
+        <input type="email" id="login-email" placeholder="Email" required autocomplete="username" />
+        <input type="password" id="login-pass" placeholder="Parolă" required autocomplete="current-password" />
+        <div id="login-eroare" class="error-msg" style="display:none"></div>
+        <button type="submit">Conectează-te</button>
+      </form>
+      <div class="alt-link">
+        Nu ai cont? <a href="register.html">Creează cont</a>
+      </div>
+    </div>
+  </main>
+  <script>
+    document.getElementById("loginForm").onsubmit = async function(e) {
+      e.preventDefault();
+      const email = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-pass").value;
+      const eroare = document.getElementById("login-eroare");
+      eroare.style.display = "none";
+      try {
+        const res = await fetch("/user/login", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({email, password})
+        });
+        const data = await res.json();
+        if (!res.ok || !data.user) {
+          eroare.innerText = data.error || "Eroare la autentificare!";
+          eroare.style.display = "block";
+          return;
+        }
+        localStorage.setItem("user", JSON.stringify({
+  id: data.user.id,
+  name: data.user.name,
+  email: data.user.email,
+  role: data.user.role
+}));
+
+        // Redirect
+        if (data.user.role === "admin") {
+          window.location.href = "admin.html";
+        } else {
+          window.location.href = "index.html";
+        }
+      } catch (err) {
+        eroare.innerText = "Eroare server!";
+        eroare.style.display = "block";
+      }
+    }
+  </script>
+</body>
+</html>

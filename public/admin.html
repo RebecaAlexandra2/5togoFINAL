@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin - Rapoarte</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <header>
+    <div class="container">
+      <img src="logo.jpg" alt="5 to go logo" />
+      <nav>
+        <a href="index.html">Meniu</a>
+        <a href="admin.html">Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h2 class="title">📊 Rapoarte vânzări</h2>
+
+    <!-- Calendar PERIOADĂ -->
+    <div style="text-align:center; margin-bottom: 18px;">
+      <label>De la: <input type="date" id="start-date"></label>
+      <label style="margin-left:12px;">Până la: <input type="date" id="end-date"></label>
+    </div>
+
+    <div style="text-align: center;">
+      <button onclick="incarcaRaport()">Vânzări 30 zile</button>
+      <button onclick="incarcaTopProduse()">Top produse vândute</button>
+      <button onclick="incarcaUtilizatoriActivi()">Utilizatori activi</button>
+      <button onclick="incarcaTotalVenituri()">Total venituri</button>
+      <button onclick="incarcaDashboard()">Vezi dashboard general</button>
+      <button onclick="incarcaRaportLocatii()">Vânzări pe locații</button>
+    </div>
+
+    <div id="raport"></div>
+  </main>
+
+  <script src="raport.js"></script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <title>Plasare comandă</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <header>
+    <div class="container">
+      <img src="logo.jpg" alt="5 to go logo" />
+      <nav>
+        <a href="index.html">Meniu</a>
+        <a href="admin.html">Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h2 class="title">🛒 Plasează comandă</h2>
+
+    <div style="max-width: 400px; margin: 0 auto; text-align: center; background: #fff8e1; padding: 30px; border-radius: 20px; box-shadow: 0 6px 20px rgba(214, 185, 131, 0.3);">
+      <label for="selectLocatie" style="font-weight: bold; color: #4a2f1a;">Alege locația:</label><br/>
+      <select id="selectLocatie" style="padding: 10px; margin-top: 10px; width: 100%; border-radius: 8px; border: 1px solid #ccc;"></select>
+
+      <br/><br/>
+      <button onclick="trimiteComanda()" style="background: #d69f6b; color: white; border: none; padding: 12px 20px; border-radius: 25px; font-size: 1rem; font-weight: 700; cursor: pointer;">Trimite comandă test</button>
+    </div>
+  </main>
+
+  <script src="comanda.js"></script>
+</body>
+</html>

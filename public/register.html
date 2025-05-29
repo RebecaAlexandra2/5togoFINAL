@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <title>Creează cont • 5 to go</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Segoe+UI:700,400&display=swap">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f5f0e6, #d6b983);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #6f4e37;
+      padding: 15px 30px;
+      color: #fff;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.16);
+    }
+    header img {
+      height: 42px;
+      vertical-align: middle;
+      filter: drop-shadow(1px 1px 1px #c9a66b);
+    }
+    main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 70vh;
+    }
+    .register-container {
+      background: #fff8e1;
+      border-radius: 24px;
+      box-shadow: 0 8px 28px rgba(214, 185, 131, 0.18);
+      padding: 42px 32px 30px 32px;
+      max-width: 420px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 35px auto;
+    }
+    .register-container h2 {
+      margin-top: 0;
+      margin-bottom: 18px;
+      color: #6f4e37;
+      font-weight: 900;
+      letter-spacing: 2px;
+      font-size: 2rem;
+      text-align: center;
+    }
+    .register-container form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .register-container input {
+      border: none;
+      outline: none;
+      border-radius: 14px;
+      background: #f9eec8;
+      padding: 13px 15px;
+      font-size: 1rem;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 8px #d6b98344;
+      color: #4a2f1a;
+      font-weight: 600;
+      transition: box-shadow 0.2s;
+    }
+    .register-container input:focus {
+      box-shadow: 0 0 0 2px #d6b98399;
+    }
+    .register-container button {
+      background: #d69f6b;
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 12px 0;
+      font-weight: 700;
+      font-size: 1.13rem;
+      letter-spacing: 1px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.25s;
+      box-shadow: 0 6px 14px #d6b98355;
+    }
+    .register-container button:hover {
+      background: #b87f4e;
+    }
+    .register-container .error-msg, .register-container .success-msg {
+      color: #d66a6a;
+      background: #fff4ec;
+      padding: 8px 13px;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 4px;
+      font-size: 1rem;
+      display: none;
+    }
+    .register-container .success-msg {
+      color: #4caf50;
+      background: #e7f9e1;
+      margin-bottom: 12px;
+    }
+    .register-container .alt-link {
+      margin-top: 18px;
+      text-align: center;
+      font-size: 1rem;
+      color: #8e693f;
+    }
+    .register-container .alt-link a {
+      color: #b87f4e;
+      text-decoration: none;
+      font-weight: bold;
+      margin-left: 6px;
+      transition: color 0.2s;
+    }
+    .register-container .alt-link a:hover {
+      color: #6f4e37;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="logo.jpg" alt="5 to go" />
+  </header>
+  <main>
+    <div class="register-container">
+      <h2>Creează cont</h2>
+      <form id="registerForm">
+        <input type="text" id="register-username" placeholder="Nume complet" required />
+        <input type="email" id="register-email" placeholder="Email" required autocomplete="username" />
+        <input type="password" id="register-password" placeholder="Parolă" required autocomplete="new-password" minlength="6" />
+        <div id="register-error" class="error-msg"></div>
+        <div id="register-success" class="success-msg"></div>
+        <button type="submit">Creează cont</button>
+      </form>
+      <div class="alt-link">
+        Ai deja cont? <a href="login.html">Autentifică-te</a>
+      </div>
+    </div>
+  </main>
+  <script>
+    document.getElementById("registerForm").onsubmit = async function(e) {
+      e.preventDefault();
+      const username = document.getElementById("register-username").value.trim();
+      const email = document.getElementById("register-email").value.trim();
+      const password = document.getElementById("register-password").value;
+      const errorDiv = document.getElementById("register-error");
+      const successDiv = document.getElementById("register-success");
+      errorDiv.style.display = "none";
+      successDiv.style.display = "none";
+
+      if (!username || !email || !password) {
+        errorDiv.innerText = "Completează toate câmpurile!";
+        errorDiv.style.display = "block";
+        return;
+      }
+      try {
+        const res = await fetch("/user/register", { 
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ username, email, password })
+        });
+        const data = await res.json();
+        if (data.success) {
+          successDiv.innerText = "Cont creat cu succes! Poți să te autentifici acum.";
+          successDiv.style.display = "block";
+          errorDiv.style.display = "none";
+          document.getElementById("registerForm").reset();
+          setTimeout(() => window.location.href = "login.html", 1400);
+        } else {
+          errorDiv.innerText = data.error || "Eroare la înregistrare!";
+          errorDiv.style.display = "block";
+        }
+      } catch (err) {
+        errorDiv.innerText = "Eroare server!";
+        errorDiv.style.display = "block";
+      }
+    }
+  </script>
+</body>
+</html>
