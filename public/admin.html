@@ -8,7 +8,8 @@
 <body>
   <header>
     <div class="container">
-      <img src="logo.jpg" alt="5 to go logo" />
+      <!-- Aici am pus o cale validă spre logo, schimbă după cum ai fișierul -->
+      <img src="images/logo.jpg" alt="5 to go Logo" height="45" />
       <nav>
         <a href="index.html">Meniu</a>
         <a href="admin.html">Admin</a>
@@ -18,25 +19,43 @@
 
   <main>
     <h2 class="title">📊 Rapoarte vânzări</h2>
-
+  
     <!-- Calendar PERIOADĂ -->
-    <div style="text-align:center; margin-bottom: 18px;">
-      <label>De la: <input type="date" id="start-date"></label>
-      <label style="margin-left:12px;">Până la: <input type="date" id="end-date"></label>
+    <div class="dashboard-filters">
+      <label>De la:<br><input type="date" id="start-date"></label>
+      <label>Până la:<br><input type="date" id="end-date"></label>
     </div>
-
-    <div style="text-align: center;">
-      <button onclick="incarcaRaport()">Vânzări 30 zile</button>
-      <button onclick="incarcaTopProduse()">Top produse vândute</button>
-      <button onclick="incarcaUtilizatoriActivi()">Utilizatori activi</button>
-      <button onclick="incarcaTotalVenituri()">Total venituri</button>
-      <button onclick="incarcaDashboard()">Vezi dashboard general</button>
-      <button onclick="incarcaRaportLocatii()">Vânzări pe locații</button>
+  
+    <div class="dashboard-buttons">
+      <button class="dashboard-btn" onclick="incarcaRaport()">
+        <i>📅</i>
+        Vânzări 30 zile
+      </button>
+      <button class="dashboard-btn" onclick="incarcaTopProduse()">
+        <i>🥇</i>
+        Top produse vândute
+      </button>
+      <button class="dashboard-btn" onclick="incarcaUtilizatoriActivi()">
+        <i>🧑‍💻</i>
+        Utilizatori activi
+      </button>
+      <button class="dashboard-btn" onclick="incarcaTotalVenituri()">
+        <i>💰</i>
+        Total venituri
+      </button>
+      <button class="dashboard-btn" onclick="incarcaDashboard()">
+        <i>📊</i>
+        Dashboard general
+      </button>
+      <button class="dashboard-btn" onclick="incarcaRaportLocatii()">
+        <i>🏪</i>
+        Vânzări pe locații
+      </button>
     </div>
-
+  
     <div id="raport"></div>
   </main>
-
+  
   <script src="raport.js"></script>
 </body>
 </html>

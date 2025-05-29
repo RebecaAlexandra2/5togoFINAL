@@ -16,11 +16,10 @@ const orderRoutes = require("./routes/orderRoutes");
 const raportRoutes = require("./routes/raportRoutes");
 
 // ✅ Înregistrează rutele
-<<<<<<< HEAD
+
 app.use("/user", userRoutes);
-=======
 app.use("/", userRoutes);
->>>>>>> e8817b7a3a80767db031a71aada6ba58236630bf
+const someHash = "e8817b7a3a80767db031a71aada6ba58236630bf";
 app.use("/", productRoutes);
 app.use("/", orderRoutes);
 app.use("/", raportRoutes);

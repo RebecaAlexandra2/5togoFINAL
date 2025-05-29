@@ -1,7 +1,29 @@
-
-
 window.onload = async () => {
-  // Încarcă locațiile în dropdown la deschidere pagină
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  if (user && user.role === "admin") {
+    // Ascunde toate butoanele "Adaugă în coș" (dacă există aici)
+    document.querySelectorAll("button[onclick='adaugaInCos()']").forEach(btn => {
+      btn.style.display = "none";
+    });
+
+    // Ascunde butonul "Finalizează comandă"
+    const btnFinalizare = document.getElementById("finalizare-comanda");
+    if (btnFinalizare) btnFinalizare.style.display = "none";
+
+    // Afișează mesaj în containerul coșului
+    const cosContainer = document.getElementById("cos-container");
+    if (cosContainer) {
+      const msg = document.createElement("p");
+      msg.textContent = "Adminul nu poate face comenzi.";
+      msg.style.color = "red";
+      msg.style.fontWeight = "bold";
+      msg.style.marginBottom = "20px";
+      cosContainer.prepend(msg);
+    }
+  }
+
+  // Încarcă locațiile în dropdown
   const locatieSelect = document.getElementById("selectLocatie");
   try {
     const res = await fetch("/locatii");
@@ -18,7 +40,6 @@ window.onload = async () => {
 };
 
 async function trimiteComanda() {
-  // Ia userul autentificat din localStorage
   const user = JSON.parse(localStorage.getItem("user"));
   if (!user || !user.id) {
     alert("Nu ești autentificat! Loghează-te pentru a plasa comenzi.");
@@ -26,18 +47,19 @@ async function trimiteComanda() {
     return;
   }
 
-  const locatieId = parseInt(document.getElementById("selectLocatie").value);
+  if (user.role === "admin") {
+    alert("Adminul nu poate face comenzi.");
+    return;
+  }
 
-  // Ia coșul real
+  const locatieId = parseInt(document.getElementById("selectLocatie").value);
   const cos = JSON.parse(localStorage.getItem("cos")) || [];
   if (!cos.length) {
     alert("Coșul este gol!");
     return;
   }
 
-  // Ia prețurile produselor din localStorage (dacă ai salvat acolo) sau preia-le dintr-un array global
   let produseGlobal = window.produseGlobal;
-  // Dacă nu ai produseGlobal, poți încărca produsele din backend:
   if (!produseGlobal) {
     try {
       const res = await fetch("/produse");
@@ -48,7 +70,6 @@ async function trimiteComanda() {
     }
   }
 
-  // Construiește array-ul pentru comanda
   const produse = cos.map(item => ({
     id: item.id,
     quantity: item.cantitate,
@@ -58,7 +79,10 @@ async function trimiteComanda() {
   try {
     const raspuns = await fetch("/comanda", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "user-role": user.role
+      },
       body: JSON.stringify({
         user_id: user.id,
         location_id: locatieId,
@@ -74,7 +98,7 @@ async function trimiteComanda() {
     }
 
     alert(rezultat.message || "Comanda a fost plasată cu succes!");
-    localStorage.removeItem("cos"); // golește coșul după comandă
+    localStorage.removeItem("cos");
     window.location.href = "index.html";
   } catch (err) {
     alert("Eroare la trimiterea comenzii. Verifică consola.");
@@ -82,5 +106,4 @@ async function trimiteComanda() {
   }
 }
 
-// Atașează funcția la butonul de finalizare comandă
 document.getElementById("finalizare-comanda").onclick = trimiteComanda;

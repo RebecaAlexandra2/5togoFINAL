@@ -9,24 +9,49 @@ function getCalendarParams() {
   async function incarcaRaport() {
     const container = document.getElementById("raport");
     container.innerHTML = "<p>Se încarcă...</p>";
+  
     try {
-      const url = "/raport/vanzari-30-zile" + getCalendarParams();
-      const raspuns = await fetch(url);
+      const raspuns = await fetch("/raport/vanzari-30-zile");
       const date = await raspuns.json();
   
       if (!Array.isArray(date)) throw new Error("Răspuns invalid de la server");
   
-      let html = "<table border='1'><tr><th>Data</th><th>Nr. comenzi</th><th>Valoare totală (lei)</th></tr>";
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>📅 Data</th>
+              <th>🛒 Nr. comenzi</th>
+              <th>💵 Valoare totală (lei)</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+  
       date.forEach(r => {
-        html += `<tr><td>${r.data}</td><td>${r.numar_comenzi}</td><td>${r.valoare_totala} lei</td></tr>`;
+        html += `
+          <tr>
+            <td>${formatDate(r.data)}</td>
+            <td>${r.numar_comenzi}</td>
+            <td>${Number(r.valoare_totala).toFixed(2)} lei</td>
+          </tr>
+        `;
       });
-      html += "</table>";
+  
+      html += "</tbody></table>";
   
       container.innerHTML = html;
     } catch (err) {
+      console.error("❌ Eroare raport:", err);
       container.innerHTML = "<p style='color:red;'>Eroare la încărcarea raportului.</p>";
     }
   }
+  
+  function formatDate(dateStr) {
+    if (!dateStr) return "";
+    return dateStr.substring(0, 10);
+  }
+  
   
   // Top produse vândute
   async function incarcaTopProduse() {
