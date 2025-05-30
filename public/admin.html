@@ -19,12 +19,13 @@
   <main>
     <h2 class="title">📊 Rapoarte vânzări</h2>
 
-    <!-- Calendar PERIOADĂ -->
+    <!-- Filtre calendar perioadă -->
     <div class="dashboard-filters">
       <label>De la:<br><input type="date" id="start-date"></label>
       <label>Până la:<br><input type="date" id="end-date"></label>
     </div>
 
+    <!-- Butoane pentru rapoarte -->
     <div class="dashboard-buttons">
       <button class="dashboard-btn" onclick="incarcaRaport()">
         <i>📅</i> Vânzări 30 zile
@@ -49,12 +50,15 @@
       </button>
     </div>
 
-    <div id="raport"></div>
+    <!-- Zona pentru afișarea rapoartelor și tabelelor -->
+    <div id="raport" style="margin-bottom: 50px;"></div>
 
-    <!-- ✅ AICI apare tabelul ingredientelor -->
+    <!-- Secțiunea ingredientelor: tabel gol, va fi populat din JS -->
     <section id="sectiune-ingrediente" style="margin-top: 40px;">
       
-      <table id="tabel-ingrediente" border="1" cellpadding="8" cellspacing="0" style="width: 100%; background: #fffaf0;"></table>
+      <table id="tabel-ingrediente" border="1" cellpadding="8" cellspacing="0" style="width: 100%; background: #fffaf0;">
+        
+      </table>
     </section>
   </main>
 

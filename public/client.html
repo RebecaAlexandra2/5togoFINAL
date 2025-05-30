@@ -58,6 +58,19 @@
     button#aplica-recompensa:hover {
       background: #513523;
     }
+    button#toggle-istoric {
+      margin-bottom: 20px;
+      padding: 6px 14px;
+      background: #d4af37;
+      color: #4b3b1b;
+      font-weight: bold;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    button#toggle-istoric:hover {
+      background: #b39122;
+    }
     #istoric {
       background: #fff8dc;
       border-radius: 16px;
@@ -65,6 +78,7 @@
       max-width: 440px;
       width: 100%;
       box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      display: none; /* ascuns inițial */
     }
     #istoric h3 {
       font-size: 1.2rem;
@@ -89,7 +103,10 @@
   <p id="info">Se încarcă...</p>
   <div class="recompensa" id="recompensa" style="display: none;"></div>
 
-  <section id="istoric" style="display: none;">
+  <!-- Buton pentru toggle istoric -->
+  <button id="toggle-istoric">Vezi istoricul fidelității</button>
+
+  <section id="istoric">
     <h3>📜 Istoric fidelitate</h3>
     <ul id="lista-istoric"></ul>
   </section>
@@ -103,7 +120,21 @@
     document.addEventListener("DOMContentLoaded", async () => {
       const url = new URL(window.location.href);
       userId = url.pathname.split("/").pop();
+
       await reincarcaProfil();
+
+      // Toggle pentru secțiunea istoric
+      const btnToggle = document.getElementById("toggle-istoric");
+      const sectiuneIstoric = document.getElementById("istoric");
+      btnToggle.onclick = () => {
+        if (sectiuneIstoric.style.display === "none") {
+          sectiuneIstoric.style.display = "block";
+          btnToggle.innerText = "Ascunde istoricul fidelității";
+        } else {
+          sectiuneIstoric.style.display = "none";
+          btnToggle.innerText = "Vezi istoricul fidelității";
+        }
+      };
     });
 
     async function reincarcaProfil() {
@@ -142,11 +173,14 @@
         }
 
         cont.style.display = "block";
-        document.getElementById("istoric").style.display = "block";
 
         const btn = document.getElementById("aplica-recompensa");
         if (btn) btn.onclick = aplicaRecompensa;
 
+        // Inițial secțiunea istoric este ascunsă
+        document.getElementById("istoric").style.display = "none";
+
+        // Încărcăm istoricul la început, chiar dacă e ascuns
         await incarcaIstoric();
 
       } catch (err) {
