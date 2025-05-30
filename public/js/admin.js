@@ -13,8 +13,8 @@ document.addEventListener("DOMContentLoaded", () => {
       h2.innerHTML += ` — Salut, <strong>${user.name}</strong>`;
     }
   
-    // Inițializează toate componentele
     incarcaIngrediente();
+    incarcaClientiQR();
   });
   
   async function incarcaRaport() {
@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await fetch("/raport");
       const data = await res.text();
       document.getElementById("raport").innerHTML = data;
-    } catch (err) {
+    } catch {
       document.getElementById("raport").innerHTML = "<p style='color:red'>Eroare la încărcarea raportului.</p>";
     }
   }
@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await fetch("/raport/top-produse");
       const data = await res.text();
       document.getElementById("raport").innerHTML = data;
-    } catch (err) {
+    } catch {
       document.getElementById("raport").innerHTML = "<p style='color:red'>Eroare la top produse.</p>";
     }
   }
@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await fetch("/raport/utilizatori");
       const data = await res.text();
       document.getElementById("raport").innerHTML = data;
-    } catch (err) {
+    } catch {
       document.getElementById("raport").innerHTML = "<p style='color:red'>Eroare la utilizatori activi.</p>";
     }
   }
@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await fetch("/raport/venituri");
       const data = await res.text();
       document.getElementById("raport").innerHTML = data;
-    } catch (err) {
+    } catch {
       document.getElementById("raport").innerHTML = "<p style='color:red'>Eroare la venituri.</p>";
     }
   }
@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await fetch("/raport/dashboard");
       const data = await res.text();
       document.getElementById("raport").innerHTML = data;
-    } catch (err) {
+    } catch {
       document.getElementById("raport").innerHTML = "<p style='color:red'>Eroare la dashboard.</p>";
     }
   }
@@ -72,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await fetch("/raport/locatii");
       const data = await res.text();
       document.getElementById("raport").innerHTML = data;
-    } catch (err) {
+    } catch {
       document.getElementById("raport").innerHTML = "<p style='color:red'>Eroare la raport pe locații.</p>";
     }
   }
@@ -88,29 +88,28 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       const ingrediente = await res.json();
   
-      const tabel = document.getElementById("tabel-ingrediente");
+      const tabel = document.getElementById("raport");
       tabel.innerHTML = `
-        <tr>
-          <th>ID</th>
-          <th>Nume</th>
-          <th>Stoc curent</th>
-          <th>Actualizează stoc</th>
-        </tr>
-        ${ingrediente
-          .map(
-            (ing) => `
+        <h3>Gestionare ingrediente</h3>
+        <table>
           <tr>
-            <td>${ing.id}</td>
-            <td>${ing.name}</td>
-            <td>${ing.stock_quantity}</td>
-            <td>
-              <input type="number" id="nou-${ing.id}" min="0" placeholder="Nou stoc" />
-              <button onclick="actualizeazaStoc(${ing.id})">Salvează</button>
-            </td>
+            <th>ID</th>
+            <th>Nume</th>
+            <th>Stoc curent</th>
+            <th>Actualizează stoc</th>
           </tr>
-        `
-          )
-          .join("")}
+          ${ingrediente.map(ing => `
+            <tr>
+              <td>${ing.id}</td>
+              <td>${ing.name}</td>
+              <td>${ing.stock_quantity}</td>
+              <td>
+                <input type="number" id="nou-${ing.id}" min="0" placeholder="Nou stoc" />
+                <button onclick="actualizeazaStoc(${ing.id})">Salvează</button>
+              </td>
+            </tr>
+          `).join("")}
+        </table>
       `;
     } catch (err) {
       alert("Eroare la încărcarea ingredientelor.");
@@ -149,5 +148,28 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (err) {
       alert("Eroare la actualizarea stocului.");
       console.error(err);
+    }
+  }
+  
+  async function incarcaClientiQR() {
+    try {
+      const res = await fetch("/user/all");
+      const clienti = await res.json();
+  
+      const zona = document.createElement("div");
+      zona.innerHTML = `<h3>🔐 Coduri QR clienți</h3>`;
+  
+      clienti.forEach(c => {
+        if (c.role === "client") {
+          const link = `http://localhost:5002/client/${c.id}`;
+          zona.innerHTML += `
+            <p><strong>${c.name}</strong> – <a href="${link}" target="_blank">${link}</a></p>
+          `;
+        }
+      });
+  
+      document.getElementById("raport").appendChild(zona);
+    } catch (err) {
+      console.error("Eroare la afișarea codurilor QR:", err);
     }
   }

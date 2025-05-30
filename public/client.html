@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <title>Profil Client</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f7f2e7;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+    }
+    img.logo {
+      height: 60px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 2rem;
+      color: #444;
+      margin-bottom: 10px;
+    }
+    #info {
+      font-size: 1.2rem;
+      color: #333;
+      margin-bottom: 20px;
+    }
+    .recompensa {
+      background: #fff8dc;
+      border: 2px dashed #d4af37;
+      border-radius: 16px;
+      padding: 16px 24px;
+      max-width: 440px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      margin-bottom: 30px;
+    }
+    .recompensa h2 {
+      margin: 0 0 10px;
+      font-size: 1.3rem;
+      color: #6f4e37;
+    }
+    .recompensa p {
+      margin: 4px 0;
+      font-size: 1rem;
+    }
+    button#aplica-recompensa {
+      margin-top: 15px;
+      padding: 8px 18px;
+      background: #6f4e37;
+      color: white;
+      font-weight: bold;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    button#aplica-recompensa:hover {
+      background: #513523;
+    }
+    #istoric {
+      background: #fff8dc;
+      border-radius: 16px;
+      padding: 16px 24px;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    #istoric h3 {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+      color: #6f4e37;
+    }
+    #lista-istoric {
+      list-style: none;
+      padding-left: 0;
+    }
+    #lista-istoric li {
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <img src="images/logo.jpg" alt="5 to go Logo" class="logo" />
+  <h1>Punctele tale de fidelitate</h1>
+  <p id="info">Se încarcă...</p>
+  <div class="recompensa" id="recompensa" style="display: none;"></div>
+
+  <section id="istoric" style="display: none;">
+    <h3>📜 Istoric fidelitate</h3>
+    <ul id="lista-istoric"></ul>
+  </section>
+
+  <script>
+    let userId = null;
+    let puncte = 0;
+    let bauturi = 0;
+    let reducere = 0;
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const url = new URL(window.location.href);
+      userId = url.pathname.split("/").pop();
+      await reincarcaProfil();
+    });
+
+    async function reincarcaProfil() {
+      try {
+        const res = await fetch(`/user/${userId}/puncte`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          document.getElementById("info").innerText = "Eroare: " + (data.message || "Utilizator inexistent.");
+          return;
+        }
+
+        puncte = data.puncte;
+        document.getElementById("info").innerText = `Salut, ${data.name}! Ai ${puncte} puncte de fidelitate.`;
+
+        bauturi = Math.floor(puncte / 50);
+        const rest = puncte % 50;
+        reducere = Math.min(Math.floor(rest / 5), 30);
+
+        const cont = document.getElementById("recompensa");
+        let recompense = "";
+
+        if (bauturi > 0) {
+          recompense += `<p>🎁 ${bauturi} băutur${bauturi === 1 ? "ă" : "i"} gratuit${bauturi === 1 ? "ă" : "e"}</p>`;
+        }
+        if (reducere > 0) {
+          recompense += `<p>🔥 ${reducere}% reducere la următoarea comandă!</p>`;
+        }
+        if (!recompense) {
+          recompense = `<p>💡 Strânge mai multe puncte pentru a debloca recompense!</p>`;
+        }
+
+        cont.innerHTML = `<h2>🎉 Recompense disponibile</h2>${recompense}`;
+        if (bauturi > 0 || reducere > 0) {
+          cont.innerHTML += `<button id="aplica-recompensa">✅ Aplică recompensa</button>`;
+        }
+
+        cont.style.display = "block";
+        document.getElementById("istoric").style.display = "block";
+
+        const btn = document.getElementById("aplica-recompensa");
+        if (btn) btn.onclick = aplicaRecompensa;
+
+        await incarcaIstoric();
+
+      } catch (err) {
+        document.getElementById("info").innerText = "Eroare la conectarea cu serverul.";
+      }
+    }
+
+    async function aplicaRecompensa() {
+      const puncteConsumate = bauturi * 50 + reducere * 5;
+      if (puncteConsumate === 0) {
+        alert("Nu ai recompense de aplicat.");
+        return;
+      }
+
+      const confirmare = confirm(`Se vor consuma ${puncteConsumate} puncte. Confirmi aplicarea?`);
+      if (!confirmare) return;
+
+      try {
+        const res = await fetch(`/user/${userId}/consuma`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ puncte: puncteConsumate })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.message || "Eroare la aplicarea recompensei.");
+          return;
+        }
+
+        alert("✅ Recompensă aplicată!");
+        await reincarcaProfil();
+
+      } catch (err) {
+        alert("Eroare la conectare.");
+      }
+    }
+
+    async function incarcaIstoric() {
+      try {
+        const res = await fetch(`/user/${userId}/istoric`);
+        const date = await res.json();
+
+        const lista = document.getElementById("lista-istoric");
+        if (!Array.isArray(date) || !date.length) {
+          lista.innerHTML = "<li>(Nu există tranzacții recente.)</li>";
+          return;
+        }
+
+        lista.innerHTML = date.map(row => {
+          const tip = row.puncte > 0 ? "✅+" : "❌−";
+          return `<li>${tip}${Math.abs(row.puncte)}p – ${row.descriere} (${new Date(row.data).toLocaleDateString()})</li>`;
+        }).join("");
+      } catch {
+        document.getElementById("lista-istoric").innerHTML = "<li>Eroare la încărcarea istoricului.</li>";
+      }
+    }
+  </script>
+</body>
+</html>
