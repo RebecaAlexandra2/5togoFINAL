@@ -14,15 +14,18 @@ const userRoutes = require("./routes/userRoutes");
 const productRoutes = require("./routes/productRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const raportRoutes = require("./routes/raportRoutes");
-
+const adminRoutes = require("./routes/adminRoutes"); 
+const verificaAutentificare = require("./middlewares/authMiddleware");
 // ✅ Înregistrează rutele
 
 app.use("/user", userRoutes);
 app.use("/", userRoutes);
 const someHash = "e8817b7a3a80767db031a71aada6ba58236630bf";
 app.use("/", productRoutes);
-app.use("/", orderRoutes);
+app.use("/api", orderRoutes);
+app.use(orderRoutes);
 app.use("/", raportRoutes);
+app.use("/admin", verificaAutentificare, adminRoutes);
 
 // ✅ Pornește serverul
 const PORT = process.env.PORT || 5002;

@@ -1,12 +1,14 @@
 function verificaAutentificare(req, res, next) {
-    const role = req.headers['user-role'];
-    if (role) {
-      req.user = { role };
-      next();
-    } else {
-      res.status(401).json({ message: "Nu ești autentificat." });
-    }
+  const userId = req.headers["user-id"];
+  const userRole = req.headers["user-role"];
+
+  if (!userId || !userRole) {
+    return res.status(401).json({ message: "Neautentificat" });
   }
-  
-  module.exports = verificaAutentificare;
-  
+
+  // poți adăuga validări suplimentare aici dacă vrei
+  req.user = { id: parseInt(userId), role: userRole };
+  next();
+}
+
+module.exports = verificaAutentificare;

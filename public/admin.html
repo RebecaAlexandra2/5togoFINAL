@@ -8,7 +8,6 @@
 <body>
   <header>
     <div class="container">
-      <!-- Aici am pus o cale validă spre logo, schimbă după cum ai fișierul -->
       <img src="images/logo.jpg" alt="5 to go Logo" height="45" />
       <nav>
         <a href="index.html">Meniu</a>
@@ -19,43 +18,46 @@
 
   <main>
     <h2 class="title">📊 Rapoarte vânzări</h2>
-  
+
     <!-- Calendar PERIOADĂ -->
     <div class="dashboard-filters">
       <label>De la:<br><input type="date" id="start-date"></label>
       <label>Până la:<br><input type="date" id="end-date"></label>
     </div>
-  
+
     <div class="dashboard-buttons">
       <button class="dashboard-btn" onclick="incarcaRaport()">
-        <i>📅</i>
-        Vânzări 30 zile
+        <i>📅</i> Vânzări 30 zile
       </button>
       <button class="dashboard-btn" onclick="incarcaTopProduse()">
-        <i>🥇</i>
-        Top produse vândute
+        <i>🥇</i> Top produse vândute
       </button>
       <button class="dashboard-btn" onclick="incarcaUtilizatoriActivi()">
-        <i>🧑‍💻</i>
-        Utilizatori activi
+        <i>🧑‍💻</i> Utilizatori activi
       </button>
       <button class="dashboard-btn" onclick="incarcaTotalVenituri()">
-        <i>💰</i>
-        Total venituri
+        <i>💰</i> Total venituri
       </button>
       <button class="dashboard-btn" onclick="incarcaDashboard()">
-        <i>📊</i>
-        Dashboard general
+        <i>📊</i> Dashboard general
       </button>
       <button class="dashboard-btn" onclick="incarcaRaportLocatii()">
-        <i>🏪</i>
-        Vânzări pe locații
+        <i>🏪</i> Vânzări pe locații
+      </button>
+      <button class="dashboard-btn" onclick="incarcaIngrediente()">
+        🧾 Gestionare stocuri
       </button>
     </div>
-  
+
     <div id="raport"></div>
+
+    <!-- ✅ AICI apare tabelul ingredientelor -->
+    <section id="sectiune-ingrediente" style="margin-top: 40px;">
+      <h3>🧾 Ingrediente și stocuri</h3>
+      <table id="tabel-ingrediente" border="1" cellpadding="8" cellspacing="0" style="width: 100%; background: #fffaf0;"></table>
+    </section>
   </main>
-  
-  <script src="raport.js"></script>
+
+  <script src="js/admin.js"></script>
 </body>
 </html>
