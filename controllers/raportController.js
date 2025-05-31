@@ -27,7 +27,7 @@ exports.vanzariUltimele30Zile = async (req, res) => {
       JOIN users u ON o.user_id = u.id
       WHERE ${where}
         AND u.role = 'client'
-        AND o.status = 'completed'
+        AND o.status IN ('paid', 'completed')
       GROUP BY DATE(o.created_at)
       ORDER BY data DESC
     `, params);
@@ -51,7 +51,7 @@ exports.topProduseVandute = async (req, res) => {
       JOIN users u ON o.user_id = u.id
       WHERE ${where}
         AND u.role = 'client'
-        AND o.status = 'completed'
+        AND o.status IN ('paid', 'completed')
       GROUP BY p.id
       ORDER BY total_vandut DESC
       LIMIT 5
@@ -76,7 +76,7 @@ exports.utilizatoriActivi = async (req, res) => {
       JOIN orders o ON o.user_id = u.id
       WHERE ${where}
         AND u.role = 'client'
-        AND o.status = 'completed'
+        AND o.status IN ('paid', 'completed')
       GROUP BY u.id
       ORDER BY numar_comenzi DESC
     `, params);
@@ -97,7 +97,7 @@ exports.totalVenituri = async (req, res) => {
       JOIN users u ON o.user_id = u.id
       WHERE ${where}
         AND u.role = 'client'
-        AND o.status = 'completed'
+        AND o.status IN ('paid', 'completed')
     `, params);
     res.json(rows[0]);
   } catch (err) {
@@ -116,7 +116,7 @@ exports.dashboardInfo = async (req, res) => {
       JOIN users u ON o.user_id = u.id
       WHERE ${where}
         AND u.role = 'client'
-        AND o.status = 'completed'
+        AND o.status IN ('paid', 'completed')
     `, params);
 
     const [[comenzi]] = await pool.query(`
@@ -125,7 +125,7 @@ exports.dashboardInfo = async (req, res) => {
       JOIN users u ON o.user_id = u.id
       WHERE ${where}
         AND u.role = 'client'
-        AND o.status = 'completed'
+        AND o.status IN ('paid', 'completed')
     `, params);
 
     const [[utilizatori]] = await pool.query(`
@@ -134,7 +134,7 @@ exports.dashboardInfo = async (req, res) => {
       JOIN users u ON o.user_id = u.id
       WHERE ${where}
         AND u.role = 'client'
-        AND o.status = 'completed'
+        AND o.status IN ('paid', 'completed')
     `, params);
 
     const [[topProdus]] = await pool.query(`
@@ -145,7 +145,7 @@ exports.dashboardInfo = async (req, res) => {
       JOIN users u ON o.user_id = u.id
       WHERE ${where}
         AND u.role = 'client'
-        AND o.status = 'completed'
+        AND o.status IN ('paid', 'completed')
       GROUP BY p.id
       ORDER BY total DESC
       LIMIT 1
@@ -176,7 +176,7 @@ exports.vanzariPeLocatii = async (req, res) => {
       JOIN users u ON o.user_id = u.id
       WHERE ${where}
         AND u.role = 'client'
-        AND o.status = 'completed'
+        AND o.status IN ('paid', 'completed')
       GROUP BY l.id
       ORDER BY total_vanzari DESC
     `, params);
@@ -204,7 +204,7 @@ exports.vanzariPerioada = async (req, res) => {
       JOIN users u ON o.user_id = u.id
       WHERE o.created_at BETWEEN ? AND ?
         AND u.role = 'client'
-        AND o.status = 'completed'
+        AND o.status IN ('paid', 'completed')
       GROUP BY o.created_at
       ORDER BY o.created_at DESC
     `, [startDate, endDate]);

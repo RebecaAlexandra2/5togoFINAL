@@ -431,22 +431,30 @@ async function incarcaComenziPendiente() {
     let html = `
       <h3>🕓 Comenzi în așteptare</h3>
       <table>
-        <tr>
-          <th>ID Comandă</th>
-          <th>Client</th>
-          <th>Total (lei)</th>
-          <th>Status</th>
-          <th>Confirmare</th>
-        </tr>
-        ${comenzi.map(c => `
+        <thead>
           <tr>
-            <td>${c.id}</td>
-            <td>${c.nume_client}</td>
-            <td>${c.total_price}</td>
-            <td>${c.status}</td>
-            <td><button onclick="confirmaComanda(${c.id})">✅ Confirmă</button></td>
+            <th>ID Comandă</th>
+            <th>Client</th>
+            <th>Total (lei)</th>
+            <th>Status</th>
+            <th>Confirmare</th>
           </tr>
-        `).join("")}
+        </thead>
+        <tbody>
+          ${comenzi.map(c => `
+            <tr class="comanda-pending">
+              <td>${c.id}</td>
+              <td>${c.nume_client}</td>
+              <td>${c.total_price}</td>
+              <td>${c.status}</td>
+              <td>
+                <button onclick="confirmaComanda(${c.id})" title="Confirmă comanda">
+                  ✅ Confirmă
+                </button>
+              </td>
+            </tr>
+          `).join("")}
+        </tbody>
       </table>
     `;
 
@@ -454,5 +462,58 @@ async function incarcaComenziPendiente() {
   } catch (err) {
     console.error("Eroare la încărcarea comenzilor pending:", err);
     document.getElementById("raport").innerHTML = "<p style='color:red'>Eroare la comenzile pending.</p>";
+  }
+}
+
+async function incarcaAlerte() {
+  try {
+    const user = JSON.parse(localStorage.getItem("user"));
+    const res = await fetch("/admin/alerte", {
+      headers: {
+        "user-id": user.id,
+        "user-role": user.role
+      }
+    });
+    const alerte = await res.json();
+
+    if (!alerte.length) {
+      document.getElementById("raport").innerHTML = `
+        <div class="dashboard-summary alerta-verde">
+          ✅ Nu există alerte active.
+        </div>
+      `;
+      return;
+    }
+
+    let html = `
+      <h3>📢 Alerte ingrediente sub stoc minim</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Ingredient</th>
+            <th>În stoc</th>
+            <th>Cerut</th>
+            <th>Data alertă</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${alerte.map(a => `
+            <tr>
+              <td>${a.id}</td>
+              <td>${a.name}</td>
+              <td>${a.current_stock}</td>
+              <td>${a.needed_stock}</td>
+              <td>${new Date(a.created_at).toLocaleString()}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+
+    document.getElementById("raport").innerHTML = html;
+  } catch (err) {
+    console.error("Eroare la încărcarea alertelor:", err);
+    document.getElementById("raport").innerHTML = "<p style='color:red'>Eroare la încărcarea alertelor.</p>";
   }
 }

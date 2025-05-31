@@ -14,7 +14,7 @@ router.post(
 
 // ✅ Ruta GET - verificare stoc produs
 router.get("/verifica-stoc/:productId/:cantitate", orderController.verificaStoc);
-
+router.post("/verifica-stoc-global", orderController.verificaStocComplet);
 // ✅ Ruta PUT - confirmare comandă de către admin
 router.put(
   "/orders/:order_id/confirm",

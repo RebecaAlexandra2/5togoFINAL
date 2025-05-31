@@ -41,13 +41,15 @@ exports.placeOrder = async (req, res) => {
       const stocRamas = ingredient.stock_quantity - necesar;
 
       if (stocRamas < ingredient.minimum_stock) {
-        throw new Error(
-          `Stoc insuficient pentru ${ingredient.name}:\n` +
-          `• Ai în stoc: ${ingredient.stock_quantity}${ingredient.unit}\n` +
-          `• Comanda cere: ${necesar}${ingredient.unit}\n` +
-          `• Ar rămâne: ${stocRamas}${ingredient.unit}\n` +
-          `• Minim permis: ${ingredient.minimum_stock}${ingredient.unit}`
+        // Salvează alertă pentru admin, dar NU trimite detalii clientului
+        await connection.query(
+          `INSERT INTO alerts (ingredient_id, name, current_stock, needed_stock, created_at)
+           VALUES (?, ?, ?, ?, NOW())`,
+          [ingredientId, ingredient.name, ingredient.stock_quantity, necesar]
         );
+
+        // Aruncă doar mesaj generic pentru client
+        throw new Error("Stoc insuficient pentru unul dintre produsele selectate. Adminul a fost notificat.");
       }
     }
 
@@ -110,19 +112,14 @@ exports.verificaStoc = async (req, res) => {
       const stocRamas = parseFloat(ing.stock_quantity) - totalNecesar;
 
       if (stocRamas < parseFloat(ing.minimum_stock)) {
-        return res.status(400).json({
-          ok: false,
-          message: `Stoc insuficient pentru ingredientul ${ing.name}. 
-Ai ${ing.stock_quantity}${ing.unit}, comanda cere ${totalNecesar}${ing.unit}, 
-dar trebuie să rămână minim ${ing.minimum_stock}${ing.unit}.`
-        });
+        return res.status(400).json({ ok: false });
       }
     }
 
     return res.json({ ok: true });
   } catch (err) {
     console.error("Eroare la verificarea stocului:", err);
-    return res.status(500).json({ ok: false, message: "Eroare server la verificarea stocului." });
+    return res.status(500).json({ ok: false });
   }
 };
 
@@ -156,5 +153,50 @@ exports.confirmOrder = async (req, res) => {
     return res.status(500).json({ message: err.message });
   } finally {
     connection.release();
+  }
+};
+
+exports.verificaStocComplet = async (req, res) => {
+  const { produse } = req.body;
+
+  if (!produse || produse.length === 0) {
+    return res.status(400).json({ message: "Coșul este gol." });
+  }
+
+  try {
+    const totalIngrediente = {};
+
+    for (const produs of produse) {
+      const [ingrediente] = await pool.query(
+        "SELECT ingredient_id, quantity FROM recipes WHERE product_id = ?",
+        [produs.id]
+      );
+
+      for (const ing of ingrediente) {
+        const cantitateTotala = ing.quantity * produs.quantity;
+        totalIngrediente[ing.ingredient_id] = (totalIngrediente[ing.ingredient_id] || 0) + cantitateTotala;
+      }
+    }
+
+    for (const [ingredientId, necesar] of Object.entries(totalIngrediente)) {
+      const [[ingredient]] = await pool.query(
+        "SELECT name, stock_quantity, minimum_stock, unit FROM ingredients WHERE id = ?",
+        [ingredientId]
+      );
+
+      if (!ingredient) continue;
+
+      const stocRamas = ingredient.stock_quantity - necesar;
+
+      if (stocRamas < ingredient.minimum_stock) {
+        return res.status(400).json({ ok: false });
+      }
+    }
+
+    return res.json({ ok: true });
+  } catch (err) {
+    await connection.rollback();
+    console.error("❌ Eroare la comanda:", err.message);
+    return res.status(400).json({ message: err.message }); // Asta păstrăm dinamic
   }
 };

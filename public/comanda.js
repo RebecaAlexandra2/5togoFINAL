@@ -72,6 +72,28 @@ async function trimiteComanda() {
     price: produseGlobal.find(p => p.id === item.id)?.price || 0
   }));
 
+  // ✅ Verificare stoc înainte de plasare comandă
+  try {
+    const verificare = await fetch("/verifica-stoc-global", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ produse })
+    });
+
+    const rezultatVerificare = await verificare.json();
+    if (!verificare.ok) {
+      alert("❌ Stoc insuficient: " + rezultatVerificare.message);
+      return;
+    }
+  } catch (err) {
+    alert("Eroare la verificarea stocului.");
+    console.error("❌ Eroare verificare:", err);
+    return;
+  }
+
+  // ✅ Trimite comanda dacă totul e OK
   try {
     const raspuns = await fetch("/comanda", {
       method: "POST",

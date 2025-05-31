@@ -1,5 +1,5 @@
 const db = require("../config/db"); // ✅ folosește conexiunea mysql2/promise
-
+const pool = require("../config/db"); // pentru query-uri cu pool.query(...)
 // ======================== INGREDIENTE ========================
 
 exports.getIngrediente = async (req, res) => {
@@ -119,5 +119,20 @@ exports.getComenziPending = async (req, res) => {
   } catch (err) {
     console.error("Eroare getComenziPending:", err);
     res.status(500).json({ message: "Eroare la preluarea comenzilor în așteptare." });
+  }
+};
+
+// ✅ Alerte stoc insuficient
+exports.getAlerteStoc = async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT id, name, current_stock, needed_stock, created_at
+      FROM alerts
+      ORDER BY created_at DESC
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error("Eroare la preluarea alertelor:", err);
+    res.status(500).json({ message: "Eroare la preluarea alertelor." });
   }
 };

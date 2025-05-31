@@ -320,3 +320,18 @@ h2.title {
   font-weight: 800;
   letter-spacing: 0.04em;
 }
+
+.alerta-verde {
+  background: #f0fff0;
+  color: #2e7d32;
+  border: 2px solid #a5d6a7;
+}
+
+#raport .comanda-pending {
+  background: #fffbe9;
+  font-weight: bold;
+}
+
+#raport .comanda-pending:hover {
+  background: #fff3c6;
+}
