@@ -8,5 +8,5 @@ router.get("/raport/utilizatori-activi", raportController.utilizatoriActivi);
 router.get("/raport/total-venituri", raportController.totalVenituri);
 router.get("/raport/dashboard", raportController.dashboardInfo);
 router.get("/raport/locatii", raportController.vanzariPeLocatii);
-
+router.get("/raport/vanzari-perioada", raportController.vanzariPerioada);
 module.exports = router;

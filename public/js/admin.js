@@ -31,7 +31,6 @@ function afiseazaTabel(idContainer, jsonData) {
     id: "ID",
     name: "Nume",
     email: "Email",
-    numar_comenzi: "Nr. comenzi",
     total_venit: "Total venit (lei)",
     total_comenzi: "Total comenzi",
     utilizatori_activi: "Utilizatori activi",
@@ -246,5 +245,150 @@ async function incarcaClientiQR() {
     document.getElementById("raport").appendChild(zona);
   } catch (err) {
     console.error("Eroare la afișarea codurilor QR:", err);
+  }
+}
+
+async function incarcaLocatii() {
+  try {
+    const res = await fetch("/admin/locatii", {
+      headers: {
+        "user-id": JSON.parse(localStorage.getItem("user")).id,
+        "user-role": "admin"
+      }
+    });
+    const locatii = await res.json();
+
+    let html = `
+      <h3>📍 Locații active</h3>
+      <table>
+        <tr>
+          <th>ID</th>
+          <th>Nume</th>
+          <th>Adresă</th>
+          <th>Telefon</th>
+          <th>Acțiuni</th>
+        </tr>
+        ${locatii.map(loc => `
+          <tr>
+            <td>${loc.id}</td>
+            <td><input type="text" value="${loc.name}" onchange="modificaCamp(${loc.id}, 'name', this.value)" /></td>
+            <td><input type="text" value="${loc.address}" onchange="modificaCamp(${loc.id}, 'address', this.value)" /></td>
+            <td><input type="text" value="${loc.phone}" onchange="modificaCamp(${loc.id}, 'phone', this.value)" /></td>
+            <td><button onclick="stergeLocatie(${loc.id})">❌ Șterge</button></td>
+          </tr>
+        `).join("")}
+      </table>
+
+      <h4>➕ Adaugă locație</h4>
+      <input type="text" id="numeNou" placeholder="Nume" />
+      <input type="text" id="adresaNoua" placeholder="Adresă" />
+      <input type="text" id="telefonNou" placeholder="Telefon" />
+      <button onclick="adaugaLocatie()">✅ Adaugă</button>
+    `;
+
+    document.getElementById("raport").innerHTML = html;
+  } catch (err) {
+    console.error("Eroare la afișarea locațiilor:", err);
+    document.getElementById("raport").innerHTML = "<p style='color:red'>Eroare la afișarea locațiilor.</p>";
+  }
+}
+
+async function adaugaLocatie() {
+  const name = document.getElementById("numeNou").value;
+  const address = document.getElementById("adresaNoua").value;
+  const phone = document.getElementById("telefonNou").value;
+
+  if (!name || !address || !phone) {
+    alert("Completează toate câmpurile.");
+    return;
+  }
+
+  try {
+    const user = JSON.parse(localStorage.getItem("user"));
+    const res = await fetch("/admin/locatii", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "user-id": user.id,
+        "user-role": user.role
+      },
+      body: JSON.stringify({ name, address, phone })
+    });
+
+    const data = await res.json();
+    alert(data.message || "Locație adăugată.");
+    incarcaLocatii();
+  } catch (err) {
+    console.error("Eroare la adăugare:", err);
+    alert("Eroare la adăugarea locației.");
+  }
+}
+
+async function modificaCamp(id, camp, valoare) {
+  try {
+    const user = JSON.parse(localStorage.getItem("user"));
+    await fetch(`/admin/locatii/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "user-id": user.id,
+        "user-role": user.role
+      },
+      body: JSON.stringify({ [camp]: valoare })
+    });
+  } catch (err) {
+    console.error("Eroare la modificare:", err);
+    alert("Eroare la modificarea locației.");
+  }
+}
+
+async function stergeLocatie(id) {
+  const confirm1 = confirm("Sigur vrei să ștergi această locație?");
+  if (!confirm1) return;
+
+  const confirm2 = prompt("Tastează cuvântul 'ȘTERGE' pentru confirmare:");
+  if (confirm2 !== "ȘTERGE") {
+    alert("Ștergerea a fost anulată.");
+    return;
+  }
+
+  try {
+    const user = JSON.parse(localStorage.getItem("user"));
+    await fetch(`/admin/locatii/${id}`, {
+      method: "DELETE",
+      headers: {
+        "user-id": user.id,
+        "user-role": user.role
+      }
+    });
+
+    alert("Locație ștearsă.");
+    incarcaLocatii();
+  } catch (err) {
+    console.error("Eroare la ștergere:", err);
+    alert("Eroare la ștergerea locației.");
+  }
+}
+
+async function filtreazaVanzari() {
+  const startDate = document.getElementById("startDate").value;
+  const endDate = document.getElementById("endDate").value;
+
+  if (!startDate || !endDate) {
+    alert("Te rog să selectezi ambele date.");
+    return;
+  }
+
+  // Adaugă ora 00:00:00 și 23:59:59 în stringul trimis
+  const start = `${startDate} 00:00:00`;
+const end = `${endDate} 23:59:59`;
+
+  try {
+    const res = await fetch(`/raport/vanzari-perioada?startDate=${encodeURIComponent(start)}&endDate=${encodeURIComponent(end)}`);
+    const data = await res.json();
+    afiseazaTabel("raport", data);
+  } catch (err) {
+    console.error("Eroare la filtrare:", err);
+    document.getElementById("raport").innerHTML = "<p style='color:red'>Eroare la filtrarea vânzărilor.</p>";
   }
 }

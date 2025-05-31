@@ -136,6 +136,7 @@ function updateNavUserState() {
   const logoutLink = document.getElementById("logout-link");
   const userName = document.getElementById("user-name");
   const userPuncte = document.getElementById("user-puncte");
+  const comandaLink = document.getElementById("comanda-link"); // 🔸 AICI
 
   if (adminLink) adminLink.style.display = "none";
   if (loginLink) loginLink.style.display = "inline";
@@ -143,6 +144,7 @@ function updateNavUserState() {
   if (logoutLink) logoutLink.style.display = "none";
   if (userName) userName.textContent = "";
   if (userPuncte) userPuncte.style.display = "none";
+  if (comandaLink) comandaLink.style.display = "inline"; // 🔸 default
 
   if (user) {
     if (loginLink) loginLink.style.display = "none";
@@ -152,6 +154,7 @@ function updateNavUserState() {
 
     if (user.role === "admin") {
       if (adminLink) adminLink.style.display = "inline";
+      if (comandaLink) comandaLink.style.display = "none"; // 🔒 Ascunde pentru admin
     } else {
       if (userPuncte) userPuncte.style.display = "inline";
     }

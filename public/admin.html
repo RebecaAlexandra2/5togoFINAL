@@ -21,8 +21,11 @@
 
     <!-- Filtre calendar perioadă -->
     <div class="dashboard-filters">
-      <label>De la:<br><input type="date" id="start-date"></label>
-      <label>Până la:<br><input type="date" id="end-date"></label>
+      <label for="startDate">De la:</label>
+      <input type="date" id="startDate">
+      <label for="endDate">Până la:</label>
+      <input type="date" id="endDate">
+      <button onclick="filtreazaVanzari()">🔍 Filtrează</button>
     </div>
 
     <!-- Butoane pentru rapoarte -->
@@ -47,6 +50,9 @@
       </button>
       <button class="dashboard-btn" onclick="incarcaIngrediente()">
         🧾 Gestionare stocuri
+      </button>
+      <button class="dashboard-btn" onclick="incarcaLocatii()">
+        🏬 Gestionare locații
       </button>
     </div>
 

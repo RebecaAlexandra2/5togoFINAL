@@ -277,3 +277,46 @@ h2.title {
     padding: 20px 10px 12px 10px;
   }
 }
+
+/* === Stiluri locații: input-uri și butoane editabile === */
+#raport input[type="text"] {
+  padding: 8px 10px;
+  border: 2px solid #d6b983;
+  border-radius: 10px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.3s ease, background 0.3s ease;
+  background: #fffef8;
+  color: #4a2f1a;
+}
+
+#raport input[type="text"]:focus {
+  border-color: #b88e3b;
+  background: #fff9dc;
+}
+
+#raport button {
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  background: #6f4e37;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 4px 12px rgba(111, 78, 55, 0.25);
+}
+
+#raport button:hover {
+  background: #8a6047;
+  transform: translateY(-1px);
+}
+
+#raport h4 {
+  margin-top: 30px;
+  font-size: 1.2rem;
+  color: #6f4e37;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}

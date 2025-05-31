@@ -3,11 +3,14 @@ const pool = require("../config/db");
 function perioadaSQL(req, defaultInterval = "30 DAY") {
   let where = `o.created_at >= CURDATE() - INTERVAL ${defaultInterval}`;
   let params = [];
-  const { start_date, end_date } = req.query;
-  if (start_date && end_date) {
-    where = `DATE(o.created_at) BETWEEN ? AND ?`;
-    params = [start_date, end_date];
+
+  // Acceptă și startDate, endDate (camelCase din frontend)
+  const { startDate, endDate } = req.query;
+  if (startDate && endDate) {
+    where = `o.created_at BETWEEN ? AND ?`;
+    params = [startDate, endDate];
   }
+
   return { where, params };
 }
 
@@ -180,5 +183,35 @@ exports.vanzariPeLocatii = async (req, res) => {
     res.json(rows);
   } catch (err) {
     res.status(500).send("Eroare la generarea raportului pe locații.");
+  }
+};
+
+// 7. Vânzări într-o perioadă selectată (pentru filtrare)
+exports.vanzariPerioada = async (req, res) => {
+  const { startDate, endDate } = req.query;
+
+  if (!startDate || !endDate) {
+    return res.status(400).json({ message: "Datele de început și sfârșit sunt necesare." });
+  }
+
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        o.created_at AS data,
+        COUNT(*) AS numar_comenzi,
+        SUM(o.total_price) AS valoare_totala
+      FROM orders o
+      JOIN users u ON o.user_id = u.id
+      WHERE o.created_at BETWEEN ? AND ?
+        AND u.role = 'client'
+        AND o.status = 'completed'
+      GROUP BY o.created_at
+      ORDER BY o.created_at DESC
+    `, [startDate, endDate]);
+
+    res.json(rows);
+  } catch (err) {
+    console.error("Eroare la vanzariPerioada:", err);
+    res.status(500).json({ message: "Eroare la filtrarea vânzărilor." });
   }
 };
