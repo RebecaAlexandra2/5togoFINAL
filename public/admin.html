@@ -9,9 +9,20 @@
   <header>
     <div class="container">
       <img src="images/logo.jpg" alt="5 to go Logo" height="45" />
+
+      <!-- CLOPOTEL NOTIFICARI -->
+      <div class="notificari-wrapper" onclick="deschideNotificari()">
+        <span class="clopotel">🔔</span>
+        <span id="badge" class="badge">0</span>
+        <div id="notificariDropdown" class="notificari-dropdown"></div>
+      </div>
+      </div> <!-- ✅ închidere corectă -->
+
+      <!-- MENIU -->
       <nav>
         <a href="index.html">Meniu</a>
         <a href="admin.html">Admin</a>
+        <a href="notificari.html">📢 Toate notificările</a>
       </nav>
     </div>
   </header>
@@ -54,10 +65,10 @@
       <button class="dashboard-btn" onclick="incarcaLocatii()">
         🏬 Gestionare locații
       </button>
-      <div class="dashboard-btn" onclick="incarcaComenziPendiente()">
+      <button class="dashboard-btn" onclick="incarcaComenziPendiente()">
         📘 Vezi comenzi neconfirmate
-      </div>
-      <button onclick="incarcaAlerte()" class="dashboard-btn">
+      </button>
+      <button class="dashboard-btn" onclick="incarcaAlerte()">
         📢 Alerte stocuri
       </button>
     </div>
@@ -67,10 +78,7 @@
 
     <!-- Secțiunea ingredientelor: tabel gol, va fi populat din JS -->
     <section id="sectiune-ingrediente" style="margin-top: 40px;">
-      
-      <table id="tabel-ingrediente" border="1" cellpadding="8" cellspacing="0" style="width: 100%; background: #fffaf0;">
-        
-      </table>
+      <table id="tabel-ingrediente" border="1" cellpadding="8" cellspacing="0" style="width: 100%; background: #fffaf0;"></table>
     </section>
   </main>
 

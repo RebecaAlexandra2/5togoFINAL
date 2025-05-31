@@ -1,21 +1,3 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const user = JSON.parse(localStorage.getItem("user"));
-
-  if (!user || user.role !== "admin") {
-    alert("Acces interzis. Doar adminii pot accesa această pagină.");
-    window.location.href = "login.html";
-    return;
-  }
-
-  const h2 = document.querySelector("h2.title");
-  if (h2 && user.name) {
-    h2.innerHTML += ` — Salut, <strong>${user.name}</strong>`;
-  }
-
-  incarcaIngrediente();
-  incarcaClientiQR();
-});
-
 function afiseazaTabel(idContainer, jsonData) {
   if (!Array.isArray(jsonData) || jsonData.length === 0) {
     document.getElementById(idContainer).innerHTML = "<p>Momentan nu există date de afișat.</p>";
@@ -517,3 +499,78 @@ async function incarcaAlerte() {
     document.getElementById("raport").innerHTML = "<p style='color:red'>Eroare la încărcarea alertelor.</p>";
   }
 }
+
+async function deschideNotificari() {
+  const dropdown = document.getElementById("notificariDropdown");
+  dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+
+  if (dropdown.style.display === "block") {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const res = await fetch("/admin/notificari", {
+        headers: {
+          "user-id": user.id,
+          "user-role": user.role
+        }
+      });
+      const notificari = await res.json();
+
+      if (!notificari.length) {
+        dropdown.innerHTML = "<p style='padding:10px;'>Nu sunt notificări.</p>";
+        return;
+      }
+
+      dropdown.innerHTML = notificari.slice(0, 5).map(n => `
+        <div class="notificare-item" onclick="location.href='/notificari.html'">
+          ${n.status === "noua" ? `<span class='necitita'>●</span>` : ""}
+          ${n.mesaj}
+        </div>
+      `).join("");
+    } catch (err) {
+      console.error("Eroare la notificări:", err);
+      dropdown.innerHTML = "<p style='padding:10px;color:red'>Eroare la notificări.</p>";
+    }
+  }
+}
+window.addEventListener("click", (e) => {
+  if (!e.target.closest(".notificari-wrapper")) {
+    document.getElementById("notificariDropdown").style.display = "none";
+  }
+});
+
+async function updateBadgeNotificari() {
+  try {
+    const user = JSON.parse(localStorage.getItem("user"));
+    const res = await fetch("/admin/notificari/necitite-count", {
+      headers: {
+        "user-id": user.id,
+        "user-role": user.role
+      }
+    });
+    const { count } = await res.json();
+    const badge = document.getElementById("badge");
+    badge.textContent = count;
+    badge.style.display = count > 0 ? "inline-block" : "none";
+  } catch (err) {
+    console.warn("Nu s-a putut actualiza badge-ul notificărilor.");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  if (!user || user.role !== "admin") {
+    alert("Acces interzis. Doar adminii pot accesa această pagină.");
+    window.location.href = "login.html";
+    return;
+  }
+
+  const h2 = document.querySelector("h2.title");
+  if (h2 && user.name) {
+    h2.innerHTML += ` — Salut, <strong>${user.name}</strong>`;
+  }
+
+  incarcaIngrediente();
+  incarcaClientiQR();
+  updateBadgeNotificari(); // ← aici se apelează badge-ul
+});

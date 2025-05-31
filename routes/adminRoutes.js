@@ -3,7 +3,12 @@ const router = express.Router();
 const adminController = require("../controllers/adminController");
 const verificaAutentificare = require("../middlewares/authMiddleware");
 const { isAdmin } = require("../middlewares/adminMiddleware"); // ✅ Ai nevoie de asta!
+const notificariController = require("../controllers/notificariController");
 
+// Notificări
+router.get("/notificari", verificaAutentificare, notificariController.getNotificari);
+router.get("/notificari/necitite-count", verificaAutentificare, notificariController.countNotificariNecitite);
+router.put("/notificari/:id", verificaAutentificare, notificariController.marcheazaNotificare);
 router.get("/ingrediente", adminController.getIngrediente);
 router.put("/ingrediente/:id", adminController.updateIngredientStoc);
 router.get("/locatii", verificaAutentificare, adminController.getLocatii);

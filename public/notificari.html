@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <title>Notificări</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <img src="images/logo.jpg" alt="5 to go Logo" height="45" />
+      <nav>
+        <a href="admin.html">🏠 Admin</a>
+        <a href="notificari.html" class="active">🔔 Notificări</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <h2 class="title">🔔 Toate notificările</h2>
+    <div id="zona-notificari"></div>
+  </main>
+
+  <!-- Script validare user -->
+  <script>
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user || user.role !== "admin") {
+      alert("Acces interzis. Trebuie să fii autentificat ca admin.");
+      window.location.href = "login.html";
+    }
+  </script>
+
+  <!-- Script notificări -->
+  <script src="js/notificari.js"></script>
+</body>
+</html>

@@ -41,14 +41,21 @@ exports.placeOrder = async (req, res) => {
       const stocRamas = ingredient.stock_quantity - necesar;
 
       if (stocRamas < ingredient.minimum_stock) {
-        // Salvează alertă pentru admin, dar NU trimite detalii clientului
+        // ✅ Salvează alertă pentru admin
         await connection.query(
           `INSERT INTO alerts (ingredient_id, name, current_stock, needed_stock, created_at)
            VALUES (?, ?, ?, ?, NOW())`,
           [ingredientId, ingredient.name, ingredient.stock_quantity, necesar]
         );
-
-        // Aruncă doar mesaj generic pentru client
+      
+        // ✅ Inserare notificare vizibilă în admin
+        await connection.query(
+          `INSERT INTO notificari (mesaj, status, created_at)
+           VALUES (?, 'noua', NOW())`,
+          [`Lipsă stoc la ${ingredient.name}. Au rămas ${ingredient.stock_quantity}${ingredient.unit}, dar se cer ${necesar}${ingredient.unit}.`]
+        );
+      
+        // ⚠️ Mesaj generic pentru client
         throw new Error("Stoc insuficient pentru unul dintre produsele selectate. Adminul a fost notificat.");
       }
     }
@@ -112,6 +119,14 @@ exports.verificaStoc = async (req, res) => {
       const stocRamas = parseFloat(ing.stock_quantity) - totalNecesar;
 
       if (stocRamas < parseFloat(ing.minimum_stock)) {
+        // 🔔 Adaugă notificare în momentul detecției
+        await pool.query(`
+          INSERT INTO notificari (mesaj, status, created_at)
+          VALUES (?, 'noua', NOW())
+        `, [
+          `Lipsă stoc la ${ing.name}. Au rămas ${ing.stock_quantity}${ing.unit}, dar se cer ${totalNecesar}${ing.unit}.`
+        ]);
+
         return res.status(400).json({ ok: false });
       }
     }
