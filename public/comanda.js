@@ -2,16 +2,13 @@ window.onload = async () => {
   const user = JSON.parse(localStorage.getItem("user"));
 
   if (user && user.role === "admin") {
-    // Ascunde toate butoanele "Adaugă în coș" (dacă există aici)
     document.querySelectorAll("button[onclick='adaugaInCos()']").forEach(btn => {
       btn.style.display = "none";
     });
 
-    // Ascunde butonul "Finalizează comandă"
     const btnFinalizare = document.getElementById("finalizare-comanda");
     if (btnFinalizare) btnFinalizare.style.display = "none";
 
-    // Afișează mesaj în containerul coșului
     const cosContainer = document.getElementById("cos-container");
     if (cosContainer) {
       const msg = document.createElement("p");
@@ -23,7 +20,6 @@ window.onload = async () => {
     }
   }
 
-  // Încarcă locațiile în dropdown
   const locatieSelect = document.getElementById("selectLocatie");
   try {
     const res = await fetch("/locatii");
@@ -81,10 +77,10 @@ async function trimiteComanda() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "user-role": user.role
+        "user-role": user.role,
+        "user-id": user.id
       },
       body: JSON.stringify({
-        user_id: user.id,
         location_id: locatieId,
         produse
       })
@@ -106,4 +102,7 @@ async function trimiteComanda() {
   }
 }
 
-document.getElementById("finalizare-comanda").onclick = trimiteComanda;
+const btnFinal = document.getElementById("finalizare-comanda");
+if (btnFinal) {
+  btnFinal.onclick = trimiteComanda;
+}

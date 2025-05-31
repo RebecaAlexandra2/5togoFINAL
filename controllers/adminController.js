@@ -102,3 +102,22 @@ exports.stergeLocatie = async (req, res) => {
     res.status(500).send("Eroare la ștergerea locației.");
   }
 };
+
+// ======================== COMENZI PENDING ========================
+
+exports.getComenziPending = async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT o.id, o.total_price, o.status, u.name AS nume_client
+      FROM orders o
+      JOIN users u ON o.user_id = u.id
+      WHERE o.status = 'pending'
+      ORDER BY o.created_at DESC
+    `);
+
+    res.json(rows);
+  } catch (err) {
+    console.error("Eroare getComenziPending:", err);
+    res.status(500).json({ message: "Eroare la preluarea comenzilor în așteptare." });
+  }
+};

@@ -9,5 +9,5 @@ router.get("/locatii", verificaAutentificare, adminController.getLocatii);
 router.post("/locatii", verificaAutentificare, adminController.adaugaLocatie);
 router.put("/locatii/:id", verificaAutentificare, adminController.updateLocatie);
 router.delete("/locatii/:id", verificaAutentificare, adminController.stergeLocatie);
-
+router.get("/comenzi-pending", verificaAutentificare, adminController.getComenziPending);
 module.exports = router;

@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const fidelitateService = require("./fidelitateService");
 
 // ✅ Comandă cu verificare și scădere stoc
 exports.placeOrder = async (req, res) => {
@@ -13,29 +14,23 @@ exports.placeOrder = async (req, res) => {
   try {
     await connection.beginTransaction();
 
-    // 🔢 Calculează ingredientele totale necesare pentru întreaga comandă
     const totalIngrediente = {};
 
     for (const produs of produse) {
       const [ingrediente] = await connection.query(
-        `SELECT ingredient_id, quantity FROM recipes WHERE product_id = ?`,
+        "SELECT ingredient_id, quantity FROM recipes WHERE product_id = ?",
         [produs.id]
       );
 
       for (const ing of ingrediente) {
         const cantitateTotala = ing.quantity * produs.quantity;
-
-        if (!totalIngrediente[ing.ingredient_id]) {
-          totalIngrediente[ing.ingredient_id] = 0;
-        }
-        totalIngrediente[ing.ingredient_id] += cantitateTotala;
+        totalIngrediente[ing.ingredient_id] = (totalIngrediente[ing.ingredient_id] || 0) + cantitateTotala;
       }
     }
 
-    // 🚨 Verifică dacă ingredientele sunt suficiente și rămâne peste minimum_stock
     for (const [ingredientId, necesar] of Object.entries(totalIngrediente)) {
       const [[ingredient]] = await connection.query(
-        `SELECT name, stock_quantity, minimum_stock, unit FROM ingredients WHERE id = ?`,
+        "SELECT name, stock_quantity, minimum_stock, unit FROM ingredients WHERE id = ?",
         [ingredientId]
       );
 
@@ -47,59 +42,46 @@ exports.placeOrder = async (req, res) => {
 
       if (stocRamas < ingredient.minimum_stock) {
         throw new Error(
-          `❌ Stoc insuficient pentru ${ingredient.name}:
-          • Ai în stoc: ${ingredient.stock_quantity}${ingredient.unit}
-          • Comanda cere: ${necesar}${ingredient.unit}
-          • Ar rămâne: ${stocRamas}${ingredient.unit}
-          • Minim permis: ${ingredient.minimum_stock}${ingredient.unit}`
+          `Stoc insuficient pentru ${ingredient.name}:\n` +
+          `• Ai în stoc: ${ingredient.stock_quantity}${ingredient.unit}\n` +
+          `• Comanda cere: ${necesar}${ingredient.unit}\n` +
+          `• Ar rămâne: ${stocRamas}${ingredient.unit}\n` +
+          `• Minim permis: ${ingredient.minimum_stock}${ingredient.unit}`
         );
       }
     }
 
-    // 🧮 Scade din stoc ingredientele necesare
     for (const [ingredientId, cantitate] of Object.entries(totalIngrediente)) {
       await connection.query(
-        `UPDATE ingredients SET stock_quantity = stock_quantity - ? WHERE id = ?`,
+        "UPDATE ingredients SET stock_quantity = stock_quantity - ? WHERE id = ?",
         [cantitate, ingredientId]
       );
     }
 
-    // 💾 Salvează comanda
     let total = 0;
     for (const p of produse) {
       total += p.price * p.quantity;
     }
 
+    const status = "pending"; // Nu "completed"
     const [orderResult] = await connection.query(
-      `INSERT INTO orders (user_id, total_price, status, created_at, location_id)
-       VALUES (?, ?, 'completed', NOW(), ?)`,
-      [user_id, total, location_id]
+      "INSERT INTO orders (user_id, total_price, status, created_at, location_id) VALUES (?, ?, ?, NOW(), ?)",
+      [user_id, total, status, location_id]
     );
 
     const order_id = orderResult.insertId;
 
-    // 🛒 Adaugă produsele în order_items
     for (const p of produse) {
       await connection.query(
-        `INSERT INTO order_items (order_id, product_id, quantity) VALUES (?, ?, ?)`,
+        "INSERT INTO order_items (order_id, product_id, quantity) VALUES (?, ?, ?)",
         [order_id, p.id, p.quantity]
       );
     }
 
-    // 🎁 Puncte de fidelitate
-    const puncte = Math.floor(total);
-    await connection.query(
-      `UPDATE users SET fidelitate_tranzactii = fidelitate_tranzactii + ? WHERE id = ?`,
-      [puncte, user_id]
-    );
-    await connection.query(
-      `INSERT INTO fidelitate_tranzactii (user_id, puncte, descriere)
-       VALUES (?, ?, 'Comandă nouă')`,
-      [user_id, puncte]
-    );
+    await fidelitateService.acordaPuncteFidelitate(user_id, total, status);
 
     await connection.commit();
-    return res.json({ message: `✅ Comandă plasată! Ai câștigat ${puncte} puncte.` });
+    return res.json({ message: `✅ Comandă plasată!` });
 
   } catch (err) {
     await connection.rollback();
@@ -110,12 +92,12 @@ exports.placeOrder = async (req, res) => {
   }
 };
 
-// 🔍 Verificare stoc pentru un produs + cantitate (rămâne neschimbată)
+// 🔍 Verificare stoc
 exports.verificaStoc = async (req, res) => {
   const { productId, cantitate } = req.params;
 
   try {
-    const ingrediente = await pool.query(
+    const [ingrediente] = await pool.query(
       `SELECT i.name, r.quantity AS cantitate_per_unit, i.stock_quantity, i.minimum_stock, i.unit
        FROM recipes r
        JOIN ingredients i ON r.ingredient_id = i.id
@@ -123,7 +105,7 @@ exports.verificaStoc = async (req, res) => {
       [productId]
     );
 
-    for (const ing of ingrediente[0]) {
+    for (const ing of ingrediente) {
       const totalNecesar = parseFloat(ing.cantitate_per_unit) * parseFloat(cantitate);
       const stocRamas = parseFloat(ing.stock_quantity) - totalNecesar;
 
@@ -131,8 +113,8 @@ exports.verificaStoc = async (req, res) => {
         return res.status(400).json({
           ok: false,
           message: `Stoc insuficient pentru ingredientul ${ing.name}. 
-          Ai ${ing.stock_quantity}${ing.unit}, comanda cere ${totalNecesar}${ing.unit}, 
-          dar trebuie să rămână minim ${ing.minimum_stock}${ing.unit}.`
+Ai ${ing.stock_quantity}${ing.unit}, comanda cere ${totalNecesar}${ing.unit}, 
+dar trebuie să rămână minim ${ing.minimum_stock}${ing.unit}.`
         });
       }
     }
@@ -141,5 +123,38 @@ exports.verificaStoc = async (req, res) => {
   } catch (err) {
     console.error("Eroare la verificarea stocului:", err);
     return res.status(500).json({ ok: false, message: "Eroare server la verificarea stocului." });
+  }
+};
+
+exports.confirmOrder = async (req, res) => {
+  const { order_id } = req.params;
+
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const [[order]] = await connection.query("SELECT user_id, total_price, status FROM orders WHERE id = ?", [order_id]);
+
+    if (!order) {
+      throw new Error("Comanda nu a fost găsită.");
+    }
+
+    if (["paid", "completed"].includes(order.status)) {
+      return res.status(400).json({ message: "Comanda a fost deja confirmată." });
+    }
+
+    await connection.query("UPDATE orders SET status = 'paid' WHERE id = ?", [order_id]);
+
+    await fidelitateService.acordaPuncteFidelitate(order.user_id, order.total_price, "paid");
+
+    await connection.commit();
+    return res.json({ message: "✅ Comanda a fost confirmată și punctele au fost acordate." });
+
+  } catch (err) {
+    await connection.rollback();
+    console.error("Eroare la confirmarea comenzii:", err);
+    return res.status(500).json({ message: err.message });
+  } finally {
+    connection.release();
   }
 };

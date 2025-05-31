@@ -392,3 +392,67 @@ const end = `${endDate} 23:59:59`;
     document.getElementById("raport").innerHTML = "<p style='color:red'>Eroare la filtrarea vânzărilor.</p>";
   }
 }
+
+async function confirmaComanda(orderId) {
+  const confirm1 = confirm("Ești sigur că vrei să confirmi această comandă?");
+  if (!confirm1) return;
+
+  try {
+    const user = JSON.parse(localStorage.getItem("user"));
+    const res = await fetch(`/orders/${orderId}/confirm`, {
+      method: "PUT",
+      headers: {
+        "user-id": user.id,
+        "user-role": user.role
+      }
+    });
+
+    const data = await res.json();
+    alert(data.message || "Comanda a fost confirmată.");
+    incarcaComenziPendiente(); // funcție de refresh, vezi mai jos
+  } catch (err) {
+    console.error("Eroare la confirmare:", err);
+    alert("Eroare la confirmarea comenzii.");
+  }
+}
+
+async function incarcaComenziPendiente() {
+  try {
+    const user = JSON.parse(localStorage.getItem("user"));
+    const res = await fetch("/admin/comenzi-pending", {
+      headers: {
+        "user-id": user.id,
+        "user-role": user.role
+      }
+    });
+
+    const comenzi = await res.json();
+
+    let html = `
+      <h3>🕓 Comenzi în așteptare</h3>
+      <table>
+        <tr>
+          <th>ID Comandă</th>
+          <th>Client</th>
+          <th>Total (lei)</th>
+          <th>Status</th>
+          <th>Confirmare</th>
+        </tr>
+        ${comenzi.map(c => `
+          <tr>
+            <td>${c.id}</td>
+            <td>${c.nume_client}</td>
+            <td>${c.total_price}</td>
+            <td>${c.status}</td>
+            <td><button onclick="confirmaComanda(${c.id})">✅ Confirmă</button></td>
+          </tr>
+        `).join("")}
+      </table>
+    `;
+
+    document.getElementById("raport").innerHTML = html;
+  } catch (err) {
+    console.error("Eroare la încărcarea comenzilor pending:", err);
+    document.getElementById("raport").innerHTML = "<p style='color:red'>Eroare la comenzile pending.</p>";
+  }
+}
