@@ -42,12 +42,15 @@ exports.placeOrder = async (req, res) => {
 
       if (stocRamas < ingredient.minimum_stock) {
         // ✅ Salvează alertă pentru admin
-        await connection.query(
-          `INSERT INTO alerts (ingredient_id, name, current_stock, needed_stock, created_at)
-           VALUES (?, ?, ?, ?, NOW())`,
-          [ingredientId, ingredient.name, ingredient.stock_quantity, necesar]
-        );
-      
+      await connection.query(
+  `INSERT INTO alerts (produs_id, mesaj, status, created_at)
+   VALUES (?, ?, 'noua', NOW())`,
+  [
+    ingredientId,
+    `Lipsă stoc la ${ingredient.name}. Au rămas ${ingredient.stock_quantity}${ingredient.unit}, dar se cer ${necesar}${ingredient.unit}.`
+  ]
+);
+
         // ✅ Inserare notificare vizibilă în admin
         await connection.query(
           `INSERT INTO notificari (mesaj, status, created_at)
@@ -189,7 +192,8 @@ exports.verificaStocComplet = async (req, res) => {
 
       for (const ing of ingrediente) {
         const cantitateTotala = ing.quantity * produs.quantity;
-        totalIngrediente[ing.ingredient_id] = (totalIngrediente[ing.ingredient_id] || 0) + cantitateTotala;
+        totalIngrediente[ing.ingredient_id] =
+          (totalIngrediente[ing.ingredient_id] || 0) + cantitateTotala;
       }
     }
 
@@ -204,14 +208,75 @@ exports.verificaStocComplet = async (req, res) => {
       const stocRamas = ingredient.stock_quantity - necesar;
 
       if (stocRamas < ingredient.minimum_stock) {
-        return res.status(400).json({ ok: false });
+        return res.status(400).json({
+          ok: false,
+          message: `Stoc insuficient: ${ingredient.name} – ${ingredient.stock_quantity}${ingredient.unit} în stoc, necesar: ${necesar}${ingredient.unit}.`
+        });
       }
     }
 
     return res.json({ ok: true });
   } catch (err) {
-    await connection.rollback();
-    console.error("❌ Eroare la comanda:", err.message);
-    return res.status(400).json({ message: err.message }); // Asta păstrăm dinamic
+    console.error("❌ Eroare la verificarea stocului complet:", err.message);
+    return res.status(500).json({
+      ok: false,
+      message: "Eroare internă la verificarea stocului."
+    });
+  }
+};
+  exports.verificaStocGlobalDetaliat = async (req, res) => {
+  const { produse } = req.body;
+  if (!produse || !Array.isArray(produse)) {
+    return res.status(400).json({ succes: false, erori: ["Date invalide"] });
+  }
+
+  try {
+    const totalIngrediente = {}; // Cheie = ingredient_id, valoare = total necesar
+
+    for (const item of produse) {
+      const [ingrediente] = await pool.query(`
+        SELECT i.id, i.name AS ingredient, i.stock_quantity, i.minimum_stock, i.unit,
+               r.quantity * ? AS necesar
+        FROM recipes r
+        JOIN ingredients i ON r.ingredient_id = i.id
+        WHERE r.product_id = ?
+      `, [item.quantity, item.product_id || item.id]);
+
+      for (const ing of ingrediente) {
+        if (!totalIngrediente[ing.id]) {
+          totalIngrediente[ing.id] = {
+            nume: ing.ingredient,
+            unit: ing.unit,
+            necesar: 0,
+            stoc: ing.stock_quantity,
+            minim: ing.minimum_stock
+          };
+        }
+        totalIngrediente[ing.id].necesar += ing.necesar;
+      }
+    }
+
+    const erori = [];
+
+    for (const [id, info] of Object.entries(totalIngrediente)) {
+      const ramas = info.stoc - info.necesar;
+      if (ramas < info.minim) {
+        erori.push({
+          ingredient: info.nume,
+          necesar: info.necesar,
+          stoc: info.stoc,
+          unitate: info.unit
+        });
+      }
+    }
+
+    if (erori.length > 0) {
+      return res.json({ succes: false, erori });
+    }
+
+    return res.json({ succes: true });
+  } catch (err) {
+    console.error("Eroare verificare stoc global detaliat:", err);
+    return res.status(500).json({ succes: false, erori: ["Eroare server"] });
   }
 };

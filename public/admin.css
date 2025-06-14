@@ -370,7 +370,7 @@ h2.title {
   position: absolute;
   top: 30px;
   right: 0;
-  background: #fff8e1;
+  background: #000000;
   border: 1px solid #d6b983;
   border-radius: 10px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.2);
@@ -380,13 +380,13 @@ h2.title {
 
 .notificare-item {
   padding: 10px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #000000;
   cursor: pointer;
   font-weight: 600;
 }
 
 .notificare-item:hover {
-  background: #fff3c6;
+  background: #ffe998;
 }
 
 .necitita {

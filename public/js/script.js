@@ -100,32 +100,54 @@ async function adaugaInCos(id) {
     return;
   }
 
-  let cantitateDorita = 1;
-  const idx = cos.findIndex(item => item.id === id);
+  const produs = produseGlobal.find(p => p.id === id);
+  if (!produs) return;
+
+  const cosSimulat = [...cos];
+  const idx = cosSimulat.findIndex(item => item.id === id);
   if (idx !== -1) {
-    cantitateDorita = cos[idx].cantitate + 1;
+    cosSimulat[idx].cantitate += 1;
+  } else {
+    cosSimulat.push({ id, cantitate: 1 });
   }
 
+  const payload = cosSimulat.map(p => ({
+    product_id: p.id,
+    quantity: p.cantitate || p.quantity,
+    name: produseGlobal.find(prod => prod.id === p.id)?.name || ""
+  }));
+
   try {
-    const res = await fetch(`/api/verifica-stoc/${id}/${cantitateDorita}`);
+    const res = await fetch("/verifica-stoc-global-detaliat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ produse: payload })
+    });
+
     const data = await res.json();
+   if (!data.succes) {
+  afiseazaModalEroare("Stoc insuficient pentru unul dintre ingredientele necesare.");
+  return;
+}
 
-    if (!res.ok || data.ok === false) {
-      afiseazaModalEroare(data.message || "Stoc insuficient pentru produs.");
-      return;
-    }
 
-    if (idx !== -1) {
-      cos[idx].cantitate += 1;
+    // ✅ Adaugă în coș
+    const idxReal = cos.findIndex(item => item.id === id);
+    if (idxReal !== -1) {
+      cos[idxReal].cantitate += 1;
     } else {
       cos.push({ id, cantitate: 1 });
     }
+
     salveazaCos();
     renderCos();
   } catch (err) {
+    console.error("Eroare la verificarea stocului:", err);
     afiseazaModalEroare("Eroare la verificarea stocului.");
   }
 }
+
+
 
 function updateNavUserState() {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -136,7 +158,7 @@ function updateNavUserState() {
   const logoutLink = document.getElementById("logout-link");
   const userName = document.getElementById("user-name");
   const userPuncte = document.getElementById("user-puncte");
-  const comandaLink = document.getElementById("comanda-link"); // 🔸 AICI
+  const comandaLink = document.getElementById("comanda-link");
 
   if (adminLink) adminLink.style.display = "none";
   if (loginLink) loginLink.style.display = "inline";
@@ -144,7 +166,7 @@ function updateNavUserState() {
   if (logoutLink) logoutLink.style.display = "none";
   if (userName) userName.textContent = "";
   if (userPuncte) userPuncte.style.display = "none";
-  if (comandaLink) comandaLink.style.display = "inline"; // 🔸 default
+  if (comandaLink) comandaLink.style.display = "inline";
 
   if (user) {
     if (loginLink) loginLink.style.display = "none";
@@ -154,7 +176,7 @@ function updateNavUserState() {
 
     if (user.role === "admin") {
       if (adminLink) adminLink.style.display = "inline";
-      if (comandaLink) comandaLink.style.display = "none"; // 🔒 Ascunde pentru admin
+      if (comandaLink) comandaLink.style.display = "none";
     } else {
       if (userPuncte) userPuncte.style.display = "inline";
     }

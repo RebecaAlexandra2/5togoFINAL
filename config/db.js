@@ -1,10 +1,11 @@
 const mysql = require("mysql2/promise");
 
 const pool = mysql.createPool({
-  socketPath: "/Applications/MAMP/tmp/mysql/mysql.sock", // ← folosește socket
+  host: "localhost",
+  port: 3307,
   user: "root",
-  password: "root",
-  database: "five_to_go",
+  password: "",
+  database: "5togo",
   waitForConnections: true,
   connectionLimit: 10
 });
