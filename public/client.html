@@ -95,10 +95,47 @@
       border-bottom: 1px solid #eee;
       padding-bottom: 4px;
     }
+    .dropdown-container {
+  margin-top: 10px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.dropdown-container label {
+  font-weight: bold;
+  color: #6f4e37;
+  display: block;
+  margin-bottom: 6px;
+}
+
+select.dropdown {
+  padding: 10px 16px;
+  font-size: 1rem;
+  border: 2px solid #d4af37;
+  border-radius: 12px;
+  background: #fff8dc;
+  color: #4b3b1b;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+select.dropdown:hover {
+  border-color: #b39122;
+}
+
+select.dropdown:focus {
+  border-color: #6f4e37;
+  background-color: #fff3b0;
+}
+
   </style>
 </head>
 <body>
-  <img src="images/logo.jpg" alt="5 to go Logo" class="logo" />
+  <a href="index.html">
+  <img src="/images/logo.jpg" alt="5 to go" class="logo" />
+</a>
+
+
   <h1>Punctele tale de fidelitate</h1>
   <p id="info">Se încarcă...</p>
   <div class="recompensa" id="recompensa" style="display: none;"></div>
@@ -167,10 +204,22 @@
           recompense = `<p>💡 Strânge mai multe puncte pentru a debloca recompense!</p>`;
         }
 
-        cont.innerHTML = `<h2>🎉 Recompense disponibile</h2>${recompense}`;
-        if (bauturi > 0 || reducere > 0) {
-          cont.innerHTML += `<button id="aplica-recompensa">✅ Aplică recompensa</button>`;
-        }
+       cont.innerHTML = `<h2>🎉 Recompense disponibile</h2>${recompense}`;
+
+if (bauturi > 0 || reducere > 0) {
+  cont.innerHTML += `
+   <div class="dropdown-container">
+  <label for="tip-recompensa">🎯 Alege recompensa:</label>
+  <select id="tip-recompensa" class="dropdown">
+    ${bauturi > 0 ? `<option value="bautura">🎁 Băutură gratuită (−50p)</option>` : ""}
+    ${reducere > 0 ? `<option value="reducere">🔥 ${reducere}% reducere (−${reducere * 5}p)</option>` : ""}
+  </select>
+</div>
+
+    <br><button id="aplica-recompensa">✅ Aplică recompensa</button>
+  `;
+}
+
 
         cont.style.display = "block";
 
@@ -188,36 +237,48 @@
       }
     }
 
-    async function aplicaRecompensa() {
-      const puncteConsumate = bauturi * 50 + reducere * 5;
-      if (puncteConsumate === 0) {
-        alert("Nu ai recompense de aplicat.");
-        return;
-      }
+async function aplicaRecompensa() {
+  const tip = document.getElementById("tip-recompensa").value;
+  let puncteConsumate = 0;
+  let descriere = "";
 
-      const confirmare = confirm(`Se vor consuma ${puncteConsumate} puncte. Confirmi aplicarea?`);
-      if (!confirmare) return;
+  if (tip === "bautura") {
+    puncteConsumate = 50;
+    descriere = "Băutură gratuită aplicată";
+  } else if (tip === "reducere") {
+    puncteConsumate = reducere * 5;
+    descriere = `${reducere}% reducere aplicată`;
+  }
 
-      try {
-        const res = await fetch(`/user/${userId}/consuma`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ puncte: puncteConsumate })
-        });
+  if (puncteConsumate === 0 || puncte < puncteConsumate) {
+    alert("Recompensa nu este disponibilă.");
+    return;
+  }
 
-        const data = await res.json();
-        if (!res.ok) {
-          alert(data.message || "Eroare la aplicarea recompensei.");
-          return;
-        }
+  const confirmare = confirm(`Se vor consuma ${puncteConsumate} puncte. Confirmi aplicarea recompensei?`);
+  if (!confirmare) return;
 
-        alert("✅ Recompensă aplicată!");
-        await reincarcaProfil();
+  try {
+    const res = await fetch(`/user/${userId}/consuma`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ puncte: puncteConsumate, descriere })
+    });
 
-      } catch (err) {
-        alert("Eroare la conectare.");
-      }
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.message || "Eroare la aplicarea recompensei.");
+      return;
     }
+
+    alert("✅ Recompensă aplicată!");
+    await reincarcaProfil();
+
+  } catch (err) {
+    alert("Eroare la conectare.");
+  }
+}
+
 
     async function incarcaIstoric() {
       try {

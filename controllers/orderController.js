@@ -40,27 +40,37 @@ exports.placeOrder = async (req, res) => {
 
       const stocRamas = ingredient.stock_quantity - necesar;
 
-      if (stocRamas < ingredient.minimum_stock) {
-        // ✅ Salvează alertă pentru admin
-      await connection.query(
-  `INSERT INTO alerts (produs_id, mesaj, status, created_at)
-   VALUES (?, ?, 'noua', NOW())`,
-  [
-    ingredientId,
-    `Lipsă stoc la ${ingredient.name}. Au rămas ${ingredient.stock_quantity}${ingredient.unit}, dar se cer ${necesar}${ingredient.unit}.`
-  ]
+if (stocRamas < ingredient.minimum_stock) {
+  await connection.rollback(); // închide tranzacția
+
+  const mesajAlert = `Lipsă stoc la ${ingredient.name}. Au rămas ${ingredient.stock_quantity}${ingredient.unit}, dar se cer ${necesar}${ingredient.unit}.`;
+
+  const [existente] = await pool.query( // pool aici
+    `SELECT id FROM notificari 
+     WHERE mesaj = ? 
+     AND created_at >= NOW() - INTERVAL 10 MINUTE`,
+    [mesajAlert]
+  );
+
+  if (existente.length === 0) {
+    await connection.query(
+  `INSERT INTO alerts (produs_id, mesaj, status, created_at, current_stock, needed_stock)
+   VALUES (?, ?, 'noua', NOW(), ?, ?)`,
+  [ingredientId, mesajAlert, ingredient.stock_quantity, necesar]
 );
 
-        // ✅ Inserare notificare vizibilă în admin
-        await connection.query(
-          `INSERT INTO notificari (mesaj, status, created_at)
-           VALUES (?, 'noua', NOW())`,
-          [`Lipsă stoc la ${ingredient.name}. Au rămas ${ingredient.stock_quantity}${ingredient.unit}, dar se cer ${necesar}${ingredient.unit}.`]
-        );
-      
-        // ⚠️ Mesaj generic pentru client
-        throw new Error("Stoc insuficient pentru unul dintre produsele selectate. Adminul a fost notificat.");
-      }
+
+    await pool.query( // pool aici
+      `INSERT INTO notificari (mesaj, status, created_at)
+       VALUES (?, 'noua', NOW())`,
+      [mesajAlert]
+    );
+  }
+
+  return res.status(400).json({
+    message: "Stoc insuficient pentru unul dintre produsele selectate. Adminul a fost notificat."
+  });
+}
     }
 
     for (const [ingredientId, cantitate] of Object.entries(totalIngrediente)) {

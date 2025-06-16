@@ -2,9 +2,6 @@ window.onload = async () => {
   const user = JSON.parse(localStorage.getItem("user"));
 
   if (user && user.role === "admin") {
-    document.querySelectorAll("button[onclick='adaugaInCos()']").forEach(btn => {
-      btn.style.display = "none";
-    });
 
     const btnFinalizare = document.getElementById("finalizare-comanda");
     if (btnFinalizare) btnFinalizare.style.display = "none";
@@ -74,7 +71,8 @@ async function trimiteComanda() {
 
   // ✅ Verificare stoc înainte de plasare comandă
   try {
-    const verificare = await fetch("/verifica-stoc-global", {
+   const verificare = await fetch("/verifica-stoc-global-detaliat", {
+
       method: "POST",
       headers: {
         "Content-Type": "application/json"

@@ -126,9 +126,10 @@ exports.getComenziPending = async (req, res) => {
 exports.getAlerteStoc = async (req, res) => {
   try {
     const [rows] = await pool.query(`
-      SELECT id, name, current_stock, needed_stock, created_at
-      FROM alerts
-      ORDER BY created_at DESC
+      SELECT a.id, i.name AS ingredient, a.current_stock, a.needed_stock, a.status, a.created_at
+      FROM alerts a
+      JOIN ingredients i ON a.produs_id = i.id
+      ORDER BY a.created_at DESC
     `);
     res.json(rows);
   } catch (err) {
@@ -136,3 +137,5 @@ exports.getAlerteStoc = async (req, res) => {
     res.status(500).json({ message: "Eroare la preluarea alertelor." });
   }
 };
+
+

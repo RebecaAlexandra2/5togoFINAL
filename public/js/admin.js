@@ -483,7 +483,7 @@ async function incarcaAlerte() {
           ${alerte.map(a => `
             <tr>
               <td>${a.id}</td>
-              <td>${a.name}</td>
+              <td>${a.ingredient}</td>
               <td>${a.current_stock}</td>
               <td>${a.needed_stock}</td>
               <td>${new Date(a.created_at).toLocaleString()}</td>

@@ -94,11 +94,13 @@ function stergeDinCos(id) {
 }
 
 async function adaugaInCos(id) {
+  console.log("▶️ CLICK PE PRODUS ID:", id); // ← Adaugă linia asta
   const user = JSON.parse(localStorage.getItem("user"));
   if (user && user.role === "admin") {
     afiseazaModalEroare("Adminul nu poate adăuga produse în coș.");
     return;
   }
+
 
   const produs = produseGlobal.find(p => p.id === id);
   if (!produs) return;
@@ -228,6 +230,8 @@ document.addEventListener("DOMContentLoaded", () => {
   updatePuncteFidelitate();
 });
 
+let swiperInstance = null;
+
 window.onload = async () => {
   const meniuDiv = document.getElementById("meniu");
   try {
@@ -236,59 +240,60 @@ window.onload = async () => {
     produse = produse.map(p => ({ ...p, price: parseFloat(p.price) }));
     produseGlobal = produse;
 
-    for (let i = 0; i < produse.length; i += 4) {
-      const slide = document.createElement("div");
-      slide.className = "swiper-slide";
-      for (let j = i; j < i + 4 && j < produse.length; j++) {
-        const p = produse[j];
-        const img = pozeProduse[p.name] || "https://via.placeholder.com/100";
-        let ingrediente = "";
-        if (Array.isArray(p.reteta)) {
-          ingrediente = p.reteta.map(r =>
-            `${r.ingredient} (${r.cantitate} ${r.unit})`
-          ).join(", ");
-        } else if (typeof p.ingrediente === "string") {
-          ingrediente = p.ingrediente;
-        }
-        const card = document.createElement("div");
-        card.className = "product-card";
-        card.innerHTML = `
-          <img src="${img}" alt="${p.name}" class="product-image" />
-          <h3>${p.name}</h3>
-          ${ingrediente ? `<p>${ingrediente}</p>` : ""}
-          <p>${p.gramaj} ml – ${p.price.toFixed(2)} lei</p>
-          <button class="adauga-cos" data-id="${p.id}">Adaugă în coș</button>
-        `;
-        slide.appendChild(card);
-      }
-      meniuDiv.appendChild(slide);
+// 🔥 Distruge swiper-ul anterior dacă există
+    if (swiperInstance) {
+      swiperInstance.destroy(true, true);
     }
 
-    ascundeButoaneAdmin();
+    meniuDiv.innerHTML = "";
 
-    const user = JSON.parse(localStorage.getItem("user"));
-    const btnsAdaugaCos = document.querySelectorAll("button.adauga-cos");
-
-    if (user && user.role !== "admin") {
-      btnsAdaugaCos.forEach(btn => {
-        btn.onclick = function() {
-          adaugaInCos(parseInt(btn.dataset.id));
-        };
-      });
+for (let i = 0; i < produse.length; i += 4) {
+  const slide = document.createElement("div");
+  slide.className = "swiper-slide";
+  for (let j = i; j < i + 4 && j < produse.length; j++) {
+    const p = produse[j];
+    const img = pozeProduse[p.name] || "https://via.placeholder.com/100";
+    let ingrediente = "";
+    if (Array.isArray(p.reteta)) {
+      ingrediente = p.reteta.map(r =>
+        `${r.ingredient} (${r.cantitate} ${r.unit})`
+      ).join(", ");
+    } else if (typeof p.ingrediente === "string") {
+      ingrediente = p.ingrediente;
     }
+    const card = document.createElement("div");
+    card.className = "product-card";
+    card.innerHTML = `
+      <img src="${img}" alt="${p.name}" class="product-image" />
+      <h3>${p.name}</h3>
+      ${ingrediente ? `<p>${ingrediente}</p>` : ""}
+      <p>${p.gramaj} ml – ${p.price.toFixed(2)} lei</p>
+      <button class="adauga-cos" data-id="${p.id}">Adaugă în coș</button>
+    `;
+    slide.appendChild(card);
+  }
+  meniuDiv.appendChild(slide);
+}
 
-    renderCos();
+// ✅ AICI adaugi event listenerul O SINGURĂ DATĂ, curat și corect:
+const btnsAdaugaCos = document.querySelectorAll("button.adauga-cos");
+btnsAdaugaCos.forEach(btn => {
+  btn.addEventListener("click", () => {
+    adaugaInCos(parseInt(btn.dataset.id));
+  });
+});
 
-    new Swiper('.swiper', {
-      navigation: {
-        nextEl: '.swiper-button-next',
-        prevEl: '.swiper-button-prev'
-      },
-      slidesPerView: 1,
-      autoHeight: true,
-      spaceBetween: 20,
-      watchOverflow: true
-    });
+swiperInstance = new Swiper('.swiper', {
+  navigation: {
+    nextEl: '.swiper-button-next',
+    prevEl: '.swiper-button-prev'
+  },
+  slidesPerView: 1,
+  autoHeight: true,
+  spaceBetween: 20,
+  watchOverflow: true
+});
+
 
     document.getElementById("finalizare-comanda").onclick = async () => {
       const user = JSON.parse(localStorage.getItem("user"));
