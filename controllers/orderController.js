@@ -1,6 +1,44 @@
 const pool = require("../config/db");
 const fidelitateService = require("./fidelitateService");
 
+const verificaSiGenereazaCerere = async (produsId, cantitateDorita) => {
+  try {
+    const [ingrediente] = await pool.query(`
+      SELECT i.id AS ingredient_id, i.name, i.stock_quantity, i.minimum_stock, r.quantity AS necesar_per_unit
+      FROM recipes r
+      JOIN ingredients i ON r.ingredient_id = i.id
+      WHERE r.product_id = ?
+    `, [produsId]);
+
+    for (const ing of ingrediente) {
+      const totalNecesar = ing.necesar_per_unit * cantitateDorita;
+      const stocRamas = ing.stock_quantity - totalNecesar;
+
+      if (stocRamas < ing.minimum_stock) {
+        const cantitateRecomandata = Math.max(ing.minimum_stock * 2, totalNecesar);
+const deAprovizionat = Math.max(0, cantitateRecomandata - ing.stock_quantity);
+
+        if (deAprovizionat <= 0) {
+          console.log(`⚠️ Nu se generează cerere pentru ${ing.name}, stocul este suficient.`);
+          continue;
+        }
+
+        await pool.query(`
+          INSERT INTO cereri_aprovizionare (ingredient_id, cantitate_necesara)
+          VALUES (?, ?)
+        `, [ing.ingredient_id, deAprovizionat]);
+
+        console.log(`✅ Cerere înregistrată pentru ${ing.name}, cantitate: ${deAprovizionat}`);
+      } else {
+        console.log(`ℹ️ Ingredient ${ing.name} are stoc suficient (${ing.stock_quantity}), nu se face cerere.`);
+      }
+    }
+  } catch (err) {
+    console.error("❌ Eroare la verificarea cereri:", err);
+  }
+};
+
+
 // ✅ Comandă cu verificare și scădere stoc
 exports.placeOrder = async (req, res) => {
   const user_id = req.user.id;
@@ -280,9 +318,15 @@ exports.verificaStocComplet = async (req, res) => {
       }
     }
 
-    if (erori.length > 0) {
-      return res.json({ succes: false, erori });
-    }
+   if (erori.length > 0) {
+  // ✅ Generează automat cerere de aprovizionare
+  for (const item of produse) {
+    await verificaSiGenereazaCerere(item.product_id || item.id, item.quantity);
+  }
+
+  return res.json({ succes: false, erori });
+}
+
 
     return res.json({ succes: true });
   } catch (err) {
@@ -290,3 +334,4 @@ exports.verificaStocComplet = async (req, res) => {
     return res.status(500).json({ succes: false, erori: ["Eroare server"] });
   }
 };
+

@@ -24,7 +24,7 @@ app.use("/", productRoutes);
 app.use("/api", orderRoutes);
 app.use(orderRoutes);
 app.use("/", raportRoutes);
-app.use("/admin", verificaAutentificare, adminRoutes);
+app.use("/admin", adminRoutes);
 
 // ✅ Servește pagina client la accesarea linkului QR
 app.get("/client/:id", (req, res) => {

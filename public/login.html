@@ -159,6 +159,8 @@
           eroare.style.display = "block";
           return;
         }
+        localStorage.setItem("token", data.token); // ✅ Salvează token-ul
+
         localStorage.setItem("user", JSON.stringify({
   id: data.user.id,
   name: data.user.name,
