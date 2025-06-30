@@ -167,9 +167,10 @@ exports.aprovizioneazaCerere = async (req, res) => {
 
     // 4. Adaugă linia în factura_produse
     await connection.query(`
-      INSERT INTO factura_produse (factura_id, ingredient_id, cantitate)
-      VALUES (?, ?, ?)
-    `, [facturaId, ingredientId, cantitate]);
+  INSERT INTO factura_produse (factura_id, ingredient_id, cantitate)
+  VALUES (?, ?, ?)
+`, [facturaId, ingredientId, cantitate]);
+
     console.log("FacturaResult:", facturaResult);
 console.log("FacturaId extras:", facturaId);
 

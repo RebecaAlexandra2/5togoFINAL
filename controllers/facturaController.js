@@ -18,11 +18,22 @@ exports.genereazaFacturaPDF = async (req, res) => {
     if (!factura) return res.status(404).json({ message: "Factura nu există." });
 
     const [produse] = await pool.query(`
-      SELECT i.name AS ingredient, fp.cantitate, i.unit
+      SELECT i.name AS ingredient, fp.cantitate AS cantitate, i.unit
       FROM factura_produse fp
       JOIN ingredients i ON fp.ingredient_id = i.id
       WHERE fp.factura_id = ?
     `, [id]);
+
+    const [bauturiRows] = await pool.query(`
+      SELECT DISTINCT p.name AS bautura
+      FROM factura_produse fp
+      JOIN recipes r ON fp.ingredient_id = r.ingredient_id
+      JOIN products p ON r.product_id = p.id
+      WHERE fp.factura_id = ?
+    `, [id]);
+
+    const numarProduse = produse.length;
+    const bauturiList = bauturiRows.map(b => b.bautura).join(", ");
 
     if (!produse || produse.length === 0) {
       return res.status(404).json({ message: "Factura nu conține produse." });
@@ -34,24 +45,15 @@ exports.genereazaFacturaPDF = async (req, res) => {
     const doc = new PDFDocument({ size: 'A4', margin: 40 });
     doc.pipe(res);
 
-    const width = doc.page.width;
-    const height = doc.page.height;
-
-    // === Siglă sus stânga ===
     const logoPath = path.join(__dirname, '../public/images/logo.jpg');
     if (fs.existsSync(logoPath)) {
       doc.image(logoPath, 40, 40, { width: 80 });
     }
 
-    // === Titlu factură ===
-    doc.fontSize(20).font("Helvetica-Bold").text("FACTURĂ FISCALĂ", 0, 50, {
-      align: 'center',
-      underline: true
-    });
+    doc.fontSize(20).font("./public/fonts/TIMES.TTF").text("FACTURĂ FISCALĂ", { align: 'center', underline: true });
 
-    // === Informații furnizor ===
     doc.moveDown(4);
-    doc.fontSize(12).font("Helvetica");
+    doc.fontSize(12).font("./public/fonts/TIMES.TTF");
     const dataFactura = new Date(factura.data_factura).toLocaleDateString("ro-RO");
     doc.text(`Număr factură: ${factura.numar_factura}`);
     doc.text(`Data: ${dataFactura}`);
@@ -60,10 +62,8 @@ exports.genereazaFacturaPDF = async (req, res) => {
     doc.text(`Telefon: ${factura.telefon}`);
     doc.moveDown(1.5);
 
-    // === Tabel ingrediente ===
-    doc.font("Helvetica-Bold").text("Produse aprovizionate:", { underline: true });
+    doc.font("./public/fonts/TIMES.TTF").text("Produse aprovizionate:", { underline: true });
     doc.moveDown(0.5);
-    doc.font("Helvetica");
 
     const tableTop = doc.y;
     const itemX = 60;
@@ -84,17 +84,26 @@ exports.genereazaFacturaPDF = async (req, res) => {
       y += 20;
     });
 
-    // === Total factură ===
     doc.moveDown(2);
-    doc.font("Helvetica-Bold").fontSize(13);
+    doc.font("./public/fonts/TIMES.TTF").fontSize(13);
     doc.text(`Total estimat: ${factura.total} RON`, {
       align: 'right',
       underline: true
     });
 
-    // === Footer ===
+    doc.moveDown(1.5);
+    doc.fontSize(11).fillColor("#000").font("./public/fonts/TIMES.TTF");
+    doc.text(`Această factură include ${numarProduse} produs${numarProduse !== 1 ? "e" : ""} aprovizionat${numarProduse !== 1 ? "e" : ""}.`);
+
+    doc.moveDown(0.5);
+    if (bauturiList) {
+      doc.text(`Ingrediente utilizate în: ${bauturiList}.`);
+    } else {
+      doc.text(`Nu există băuturi asociate direct.`);
+    }
+
     doc.moveDown(4);
-    doc.fontSize(10).font("Helvetica-Oblique").fillColor("gray");
+    doc.fontSize(10).font("./public/fonts/TIMES.TTF").fillColor("gray");
     doc.text("Mulțumim pentru colaborare!", {
       align: "center"
     });
@@ -105,4 +114,14 @@ exports.genereazaFacturaPDF = async (req, res) => {
     console.error("Eroare generare PDF:", err);
     res.status(500).json({ message: "Eroare la generarea facturii." });
   }
+};
+
+exports.getFacturi = async (req, res) => {
+  const [facturi] = await pool.query(`
+    SELECT f.id, f.numar_factura, f.total, f.data_factura, fr.nume_furnizor
+    FROM facturi f
+    JOIN furnizori fr ON f.furnizor_id = fr.id
+    ORDER BY f.data_factura DESC
+  `);
+  res.json(facturi);
 };

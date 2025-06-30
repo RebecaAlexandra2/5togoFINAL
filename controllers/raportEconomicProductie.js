@@ -61,21 +61,22 @@ exports.genereazaRaportEconomic = async (req, res) => {
       doc.image(logoPath, 40, 40, { width: 80 });
     }
 
-    doc.fontSize(20).font("Helvetica-Bold").text("5 to go – Raport Economic", {
-      align: "center",
-      underline: true
-    });
+   doc.fontSize(20).font("./public/fonts/TIMES.TTF").text("5 to go – Raport Economic", {
+  align: "center",
+  underline: true
+});
+
 
     doc.moveDown(2);
 
-    doc.fontSize(12).font("Helvetica");
+    doc.fontSize(12).font("./public/fonts/TIMES.TTF");
     doc.text(`Produs: ${numeProdus}`);
     doc.text(`Cantitate: ${cantitate}`);
     doc.text(`Data generare: ${new Date().toLocaleString()}`);
     doc.moveDown(1.5);
 
     // Tabel ingrediente
-    doc.font("Helvetica-Bold").text("Ingrediente utilizate:", { underline: true });
+   doc.font("./public/fonts/TIMES.TTF").text("Ingrediente utilizate:", { underline: true });
     doc.moveDown(0.5);
 
     const tableTop = doc.y;
@@ -98,7 +99,7 @@ ingrediente.forEach((ing) => {
   const costUnitar = parseFloat(ing.Cost_Per_Unitate) || 0;
   const costTotal = parseFloat(ing.Cost_Total) || 0;
 
-  doc.font("Helvetica").fillColor("#000");
+  doc.font("./public/fonts/TIMES.TTF").fillColor("#000");
   doc.text(ing.Ingredient, ingX, y);
   doc.text(ing.Cantitate_Totala.toFixed(2), qtyX, y);
   doc.text(ing.Unitate, unitX, y);
@@ -110,14 +111,14 @@ ingrediente.forEach((ing) => {
 
     doc.moveDown(2);
 
-    doc.font("Helvetica-Bold").fontSize(13);
+    doc.font("./public/fonts/TIMES.TTF").fontSize(13);
     doc.text(`Cost total producție: ${totalCost.toFixed(2)} RON`, {
       align: "right",
       underline: true
     });
 
     doc.moveDown(4);
-    doc.fontSize(10).font("Helvetica-Oblique").fillColor("gray");
+    doc.fontSize(10).font("./public/fonts/TIMES.TTF").fillColor("gray");
     doc.text("Raport generat automat de aplicația 5 to go", {
       align: "center"
     });

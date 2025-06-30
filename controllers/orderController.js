@@ -16,27 +16,50 @@ const verificaSiGenereazaCerere = async (produsId, cantitateDorita) => {
 
       if (stocRamas < ing.minimum_stock) {
         const cantitateRecomandata = Math.max(ing.minimum_stock * 2, totalNecesar);
-const deAprovizionat = Math.max(0, cantitateRecomandata - ing.stock_quantity);
+        const deAprovizionat = Math.max(0, cantitateRecomandata - ing.stock_quantity);
 
         if (deAprovizionat <= 0) {
           console.log(`⚠️ Nu se generează cerere pentru ${ing.name}, stocul este suficient.`);
           continue;
         }
 
-        await pool.query(`
-          INSERT INTO cereri_aprovizionare (ingredient_id, cantitate_necesara)
-          VALUES (?, ?)
-        `, [ing.ingredient_id, deAprovizionat]);
+        // 🔹 Selectăm furnizorul corect
+        const [[furnizor]] = await pool.query(`
+          SELECT furnizor_id FROM ingrediente_furnizori WHERE ingredient_id = ?
+        `, [ing.ingredient_id]);
 
-        console.log(`✅ Cerere înregistrată pentru ${ing.name}, cantitate: ${deAprovizionat}`);
+        // 🔹 Verificăm dacă există deja o cerere
+        const [existente] = await pool.query(`
+          SELECT id FROM cereri_aprovizionare
+          WHERE ingredient_id = ? AND status = 'neprocesat'
+        `, [ing.ingredient_id]);
+
+        if (existente.length > 0) {
+          console.log(`🔹 Cerere deja existentă pentru ${ing.name}.`);
+          continue;
+        }
+
+        // 🔹 Inserăm cererea cu furnizor corect
+        await pool.query(
+  `INSERT INTO cereri_aprovizionare
+   (ingredient_id, furnizor_id, cantitate_necesara, data_cerere, status)
+   VALUES (?, ?, ?, NOW(), 'neprocesat')`,
+  [ing.ingredient_id, furnizor.furnizor_id, deAprovizionat]
+);
+
+
+
+
+        console.log(`✅ Cerere înregistrată pentru ${ing.name}, cantitate: ${deAprovizionat}.`);
       } else {
         console.log(`ℹ️ Ingredient ${ing.name} are stoc suficient (${ing.stock_quantity}), nu se face cerere.`);
       }
     }
   } catch (err) {
-    console.error("❌ Eroare la verificarea cereri:", err);
+    console.error("❌ Eroare la verificarea cererii:", err);
   }
 };
+
 
 
 // ✅ Comandă cu verificare și scădere stoc
@@ -78,52 +101,59 @@ exports.placeOrder = async (req, res) => {
 
       const stocRamas = ingredient.stock_quantity - necesar;
 
-if (stocRamas < ingredient.minimum_stock) {
-  await connection.rollback();
+      if (stocRamas < ingredient.minimum_stock) {
+        await connection.rollback();
 
-  // ✅ Generează factura
-  const numarFactura = "FTG-" + Date.now();
-  const [facturaResult] = await pool.query(
-    `INSERT INTO facturi (numar_factura, furnizor_id, total, data_factura)
-     VALUES (?, ?, ?, NOW())`,
-    [numarFactura, 1, necesar]
-  );
-  const facturaId = facturaResult.insertId;
+        const [[furnizor]] = await connection.query(
+          `SELECT furnizor_id FROM ingrediente_furnizori WHERE ingredient_id = ?`,
+          [ingredientId]
+        );
 
-  // ✅ Generează cererea de aprovizionare
-  await pool.query(
-    `INSERT INTO cereri_aprovizionare
-     (ingredient_id, cantitate_necesara, status, data_cerere, factura_id)
-     VALUES (?, ?, 'neprocesata', NOW(), ?)`,
-    [ingredientId, necesar, facturaId]
-  );
+        const numarFactura = "FTG-" + Date.now();
+        const [facturaResult] = await connection.query(
+          `INSERT INTO facturi (numar_factura, furnizor_id, total, data_factura)
+           VALUES (?, ?, ?, NOW())`,
+          [numarFactura, furnizor.furnizor_id, necesar]
+        );
+        const facturaId = facturaResult.insertId;
 
-  console.log(`✅ Cerere și factură generate automat pentru ${ingredient.name}`);
+        await connection.query(
+          `INSERT INTO factura_produse (factura_id, ingredient_id, cantitate)
+           VALUES (?, ?, ?)`,
+          [facturaId, ingredientId, necesar]
+        );
 
-  const mesajAlert = `Lipsă stoc la ${ingredient.name}. Au rămas ${ingredient.stock_quantity}${ingredient.unit}, dar se cer ${necesar}${ingredient.unit}.`;
+        await connection.query(
+          `INSERT INTO cereri_aprovizionare
+           (ingredient_id, furnizor_id, cantitate_necesara, data_cerere, status, factura_id)
+           VALUES (?, ?, ?, NOW(), 'neprocesat', ?)`,
+          [ingredientId, furnizor.furnizor_id, necesar, facturaId]
+        );
 
-  const [existente] = await pool.query(
-    `SELECT id FROM notificari 
-     WHERE mesaj = ? 
-     AND created_at >= NOW() - INTERVAL 10 MINUTE`,
-    [mesajAlert]
-  );
+        const mesajAlert = `Lipsă stoc la ${ingredient.name}. Au rămas ${ingredient.stock_quantity}${ingredient.unit}, dar se cer ${necesar}${ingredient.unit}.`;
 
-  if (existente.length === 0) {
-    await pool.query(
-      `INSERT INTO notificari (mesaj, status, created_at)
-       VALUES (?, 'noua', NOW())`,
-      [mesajAlert]
-    );
-  }
+        const [existente] = await connection.query(
+          `SELECT id FROM notificari 
+           WHERE mesaj = ? 
+           AND created_at >= NOW() - INTERVAL 10 MINUTE`,
+          [mesajAlert]
+        );
 
-  return res.status(400).json({
-    message: "Stoc insuficient. Factura și cererea au fost generate, adminul a fost notificat."
-  });
-}
+        if (existente.length === 0) {
+          await connection.query(
+            `INSERT INTO notificari (mesaj, status, created_at)
+             VALUES (?, 'noua', NOW())`,
+            [mesajAlert]
+          );
+        }
 
+        return res.status(400).json({
+          message: "Stoc insuficient. Factura și cererea au fost generate, adminul a fost notificat."
+        });
+      }
     }
 
+    // Dacă stocurile sunt suficiente, actualizezi ingredientele:
     for (const [ingredientId, cantitate] of Object.entries(totalIngrediente)) {
       await connection.query(
         "UPDATE ingredients SET stock_quantity = stock_quantity - ? WHERE id = ?",
@@ -136,7 +166,7 @@ if (stocRamas < ingredient.minimum_stock) {
       total += p.price * p.quantity;
     }
 
-    const status = "pending"; // Nu "completed"
+    const status = "pending";
     const [orderResult] = await connection.query(
       "INSERT INTO orders (user_id, total_price, status, created_at, location_id) VALUES (?, ?, ?, NOW(), ?)",
       [user_id, total, status, location_id]
@@ -164,6 +194,7 @@ if (stocRamas < ingredient.minimum_stock) {
     connection.release();
   }
 };
+
 
 // 🔍 Verificare stoc
 exports.verificaStoc = async (req, res) => {
@@ -346,4 +377,68 @@ exports.verificaStocComplet = async (req, res) => {
     console.error("Eroare verificare stoc global detaliat:", err);
     return res.status(500).json({ succes: false, erori: ["Eroare server"] });
   }
+};
+
+// Verifică toate ingredientele cu stoc sub minim și creează cerere aprovizionare
+async function verificaSiCreeazaCereriAprovizionare() {
+  try {
+    // 1. Selectează toate ingredientele sub stoc minim
+    const [ingrediente] = await pool.query(`
+      SELECT i.id, i.name, i.stock_quantity, i.minimum_stock, f.furnizor_id, fr.nume_furnizor
+      FROM ingredients i
+      JOIN ingrediente_furnizori f ON i.id = f.ingredient_id
+      JOIN furnizori fr ON f.furnizor_id = fr.id
+      WHERE i.stock_quantity <= i.minimum_stock
+    `);
+
+    // 2. Dacă nu e nimic de aprovizionat, ieșim
+    if (ingrediente.length === 0) {
+      console.log("Nu există ingrediente sub stoc minim.");
+      return;
+    }
+
+    // 3. Pentru fiecare ingredient, creăm cerere
+    for (const ing of ingrediente) {
+      // Opțional: verificăm dacă există deja o cerere neprocesată
+      const [existente] = await pool.query(
+        `SELECT id FROM cereri_aprovizionare
+         WHERE ingredient_id = ? AND status = 'neprocesat'`,
+        [ing.id]
+      );
+      if (existente.length > 0) {
+        console.log(`Există deja o cerere pentru ${ing.name}.`);
+        continue;
+      }
+
+      // 4. Insert cerere aprovizionare
+    await pool.query(`
+  INSERT INTO cereri_aprovizionare
+  (ingredient_id, furnizor_id, cantitate_necesara, data_cerere, status)
+  VALUES (?, ?, ?, NOW(), 'neprocesat')
+`, [ing.id, ing.furnizor_id, ing.minimum_stock * 2]);
+
+
+
+      console.log(`Cerere aprovizionare creată pentru ${ing.name}.`);
+
+      // 5. Insert notificare
+      await pool.query(
+        `INSERT INTO notificari
+         (mesaj, tip, citita, data)
+         VALUES (?, 'aprovizionare', 0, NOW())`,
+        [`Stoc redus: ${ing.name}. A fost generată cererea de aprovizionare.`]
+      );
+    }
+  } catch (err) {
+    console.error("Eroare la verificarea stocurilor:", err);
+  }
+}
+
+exports.confirmareAprovizionare = async (req, res) => {
+  const { id } = req.params;
+  await pool.query(`
+    UPDATE cereri_aprovizionare SET status='procesat'
+    WHERE id=?
+  `, [id]);
+  res.json({ message: "Cererea a fost procesată." });
 };
