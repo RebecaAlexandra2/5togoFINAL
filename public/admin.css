@@ -399,3 +399,46 @@ h2.title {
   font-weight: bold;
 }
 
+.raport-economic-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff8e1;
+  padding: 8px 12px;
+  border-radius: 10px;
+  margin: 12px 0;
+}
+
+.raport-economic-bar label {
+  font-weight: 700;
+  color: #6f4e37;
+  font-size: 0.95rem;
+}
+
+.raport-economic-bar select,
+.raport-economic-bar input {
+  padding: 4px 8px;
+  border: 2px solid #d6b983;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  background: #fffef8;
+  color: #4a2f1a;
+}
+
+.raport-economic-bar button {
+  padding: 6px 10px;
+  font-size: 0.95rem;
+  background: #6f4e37;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.raport-economic-bar button:hover {
+  background: #8a6047;
+  transform: translateY(-1px);
+}

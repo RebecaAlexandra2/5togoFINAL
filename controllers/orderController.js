@@ -79,11 +79,30 @@ exports.placeOrder = async (req, res) => {
       const stocRamas = ingredient.stock_quantity - necesar;
 
 if (stocRamas < ingredient.minimum_stock) {
-  await connection.rollback(); // închide tranzacția
+  await connection.rollback();
+
+  // ✅ Generează factura
+  const numarFactura = "FTG-" + Date.now();
+  const [facturaResult] = await pool.query(
+    `INSERT INTO facturi (numar_factura, furnizor_id, total, data_factura)
+     VALUES (?, ?, ?, NOW())`,
+    [numarFactura, 1, necesar]
+  );
+  const facturaId = facturaResult.insertId;
+
+  // ✅ Generează cererea de aprovizionare
+  await pool.query(
+    `INSERT INTO cereri_aprovizionare
+     (ingredient_id, cantitate_necesara, status, data_cerere, factura_id)
+     VALUES (?, ?, 'neprocesata', NOW(), ?)`,
+    [ingredientId, necesar, facturaId]
+  );
+
+  console.log(`✅ Cerere și factură generate automat pentru ${ingredient.name}`);
 
   const mesajAlert = `Lipsă stoc la ${ingredient.name}. Au rămas ${ingredient.stock_quantity}${ingredient.unit}, dar se cer ${necesar}${ingredient.unit}.`;
 
-  const [existente] = await pool.query( // pool aici
+  const [existente] = await pool.query(
     `SELECT id FROM notificari 
      WHERE mesaj = ? 
      AND created_at >= NOW() - INTERVAL 10 MINUTE`,
@@ -91,14 +110,7 @@ if (stocRamas < ingredient.minimum_stock) {
   );
 
   if (existente.length === 0) {
-    await connection.query(
-  `INSERT INTO alerts (produs_id, mesaj, status, created_at, current_stock, needed_stock)
-   VALUES (?, ?, 'noua', NOW(), ?, ?)`,
-  [ingredientId, mesajAlert, ingredient.stock_quantity, necesar]
-);
-
-
-    await pool.query( // pool aici
+    await pool.query(
       `INSERT INTO notificari (mesaj, status, created_at)
        VALUES (?, 'noua', NOW())`,
       [mesajAlert]
@@ -106,9 +118,10 @@ if (stocRamas < ingredient.minimum_stock) {
   }
 
   return res.status(400).json({
-    message: "Stoc insuficient pentru unul dintre produsele selectate. Adminul a fost notificat."
+    message: "Stoc insuficient. Factura și cererea au fost generate, adminul a fost notificat."
   });
 }
+
     }
 
     for (const [ingredientId, cantitate] of Object.entries(totalIngrediente)) {
@@ -334,4 +347,3 @@ exports.verificaStocComplet = async (req, res) => {
     return res.status(500).json({ succes: false, erori: ["Eroare server"] });
   }
 };
-

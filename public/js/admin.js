@@ -574,3 +574,16 @@ document.addEventListener("DOMContentLoaded", () => {
   incarcaClientiQR();
   updateBadgeNotificari(); // ← aici se apelează badge-ul
 });
+
+document.getElementById("btnRaportEconomicNav").addEventListener("click", () => {
+  const produsId = document.getElementById("selectProdusNav").value;
+  const cantitate = document.getElementById("cantitateProdusNav").value;
+
+  if (!produsId || !cantitate || cantitate <= 0) {
+    alert("Selectează produsul și introdu o cantitate validă.");
+    return;
+  }
+
+  const url = `/raport/economic-pdf?product_id=${produsId}&cantitate=${cantitate}`;
+  window.open(url, "_blank");
+});

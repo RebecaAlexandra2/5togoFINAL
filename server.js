@@ -25,6 +25,8 @@ app.use("/api", orderRoutes);
 app.use(orderRoutes);
 app.use("/", raportRoutes);
 app.use("/admin", adminRoutes);
+app.use("/raport", require("./routes/raportRoutes"));
+
 
 // ✅ Servește pagina client la accesarea linkului QR
 app.get("/client/:id", (req, res) => {
