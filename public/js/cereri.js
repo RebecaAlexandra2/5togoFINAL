@@ -36,13 +36,16 @@ async function incarcaCereri() {
   <td>${c.status}</td>
   <td>${new Date(c.data_cerere).toLocaleString()}</td>
 <td>
-  ${c.status === 'neprocesata'
+${(c.status || '').trim().toLowerCase() === 'neprocesata'
     ? `<button onclick="aprovizioneaza(${c.id}, ${c.ingredient_id}, ${Number(c.cantitate_necesara)})">✅ Aprovizionează</button>`
     : (c.factura_id
-    ? `<form action="/admin/factura/${c.factura_id}" method="GET" target="_blank">
-         <button type="submit">📄 Vezi factura</button>
-       </form>`
-    : '—')
+       ? `<form action="/admin/factura/${c.factura_id}" method="GET" target="_blank">
+            <button type="submit">📄 Vezi factura</button>
+          </form>`
+       : '—')
+  
+
+
 }
 </td>
 

@@ -151,10 +151,10 @@ exports.aprovizioneazaCerere = async (req, res) => {
     const facturaId = facturaResult.insertId;
     if (!facturaId) throw new Error("Factura nu a putut fi generată.");
 
-    // 2. Leagă cererea de factură și setează statusul
+    // 2. Leagă cererea de factură și setează statusul la FINALIZATA
     await connection.query(`
       UPDATE cereri_aprovizionare
-      SET status = 'procesata', factura_id = ?
+      SET status = 'finalizata', factura_id = ?
       WHERE id = ?
     `, [facturaId, cerereId]);
 
@@ -167,17 +167,15 @@ exports.aprovizioneazaCerere = async (req, res) => {
 
     // 4. Adaugă linia în factura_produse
     await connection.query(`
-  INSERT INTO factura_produse (factura_id, ingredient_id, cantitate)
-  VALUES (?, ?, ?)
-`, [facturaId, ingredientId, cantitate]);
-
-    console.log("FacturaResult:", facturaResult);
-console.log("FacturaId extras:", facturaId);
-
+      INSERT INTO factura_produse (factura_id, ingredient_id, cantitate)
+      VALUES (?, ?, ?)
+    `, [facturaId, ingredientId, cantitate]);
 
     await connection.commit();
-    res.json({ message: "✅ Ingredient aprovizionat și factura generată." });
-
+    res.json({
+      message: "✅ Ingredient aprovizionat și factura generată.",
+      factura_id: facturaId
+    });
   } catch (err) {
     await connection.rollback();
     console.error("❌ Eroare la aprovizionare:", err.message);
@@ -186,4 +184,5 @@ console.log("FacturaId extras:", facturaId);
     connection.release();
   }
 };
+
 
