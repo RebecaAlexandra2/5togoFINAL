@@ -69,7 +69,7 @@ async function trimiteComanda() {
     price: produseGlobal.find(p => p.id === item.id)?.price || 0
   }));
 
-  // ✅ Verificare stoc înainte de plasare comandă
+  // ✅ Verificare stoc inainte de plasare comanda
   try {
    const verificare = await fetch("/verifica-stoc-global-detaliat", {
 

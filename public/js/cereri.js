@@ -105,6 +105,6 @@ function deschideFactura(facturaId) {
     return;
   }
 
-  // Deschide factura într-un tab nou, cu sesiunea curentă
+  // Deschide factura intr-un tab nou, cu sesiunea curenta
   window.open(`/admin/factura/${facturaId}`, '_blank');
 }

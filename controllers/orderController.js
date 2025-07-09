@@ -23,15 +23,16 @@ const verificaSiGenereazaCerere = async (produsId, cantitateDorita) => {
           continue;
         }
 
-        // 🔹 Selectăm furnizorul corect
+        // 🔹 Selectam furnizorul corect
         const [[furnizor]] = await pool.query(`
           SELECT furnizor_id FROM ingrediente_furnizori WHERE ingredient_id = ?
         `, [ing.ingredient_id]);
 
-        // 🔹 Verificăm dacă există deja o cerere
+        // 🔹 Verificam dacă exista deja o cerere
         const [existente] = await pool.query(`
           SELECT id FROM cereri_aprovizionare
-          WHERE ingredient_id = ? AND status = 'neprocesat'
+          WHERE ingredient_id = ? AND status = 'neprocesata'
+
         `, [ing.ingredient_id]);
 
         if (existente.length > 0) {
@@ -39,11 +40,12 @@ const verificaSiGenereazaCerere = async (produsId, cantitateDorita) => {
           continue;
         }
 
-        // 🔹 Inserăm cererea cu furnizor corect
+        // 🔹 Inseram cererea cu furnizor corect
         await pool.query(
   `INSERT INTO cereri_aprovizionare
    (ingredient_id, furnizor_id, cantitate_necesara, data_cerere, status)
-   VALUES (?, ?, ?, NOW(), 'neprocesat')`,
+   VALUES (?, ?, ?, NOW(), 'neprocesata'
+)`,
   [ing.ingredient_id, furnizor.furnizor_id, deAprovizionat]
 );
 
@@ -62,7 +64,7 @@ const verificaSiGenereazaCerere = async (produsId, cantitateDorita) => {
 
 
 
-// ✅ Comandă cu verificare și scădere stoc
+// ✅ Comanda cu verificare si scadere stoc
 exports.placeOrder = async (req, res) => {
   const user_id = req.user.id;
   const { produse, location_id } = req.body;
@@ -126,7 +128,8 @@ exports.placeOrder = async (req, res) => {
         await connection.query(
           `INSERT INTO cereri_aprovizionare
            (ingredient_id, furnizor_id, cantitate_necesara, data_cerere, status, factura_id)
-           VALUES (?, ?, ?, NOW(), 'neprocesat', ?)`,
+           VALUES (?, ?, ?, NOW(), 'neprocesata'
+, ?)`,
           [ingredientId, furnizor.furnizor_id, necesar, facturaId]
         );
 
@@ -153,7 +156,7 @@ exports.placeOrder = async (req, res) => {
       }
     }
 
-    // Dacă stocurile sunt suficiente, actualizezi ingredientele:
+    // Daca stocurile sunt suficiente, actualizezi ingredientele:
     for (const [ingredientId, cantitate] of Object.entries(totalIngrediente)) {
       await connection.query(
         "UPDATE ingredients SET stock_quantity = stock_quantity - ? WHERE id = ?",
@@ -214,7 +217,7 @@ exports.verificaStoc = async (req, res) => {
       const stocRamas = parseFloat(ing.stock_quantity) - totalNecesar;
 
       if (stocRamas < parseFloat(ing.minimum_stock)) {
-        // 🔔 Adaugă notificare în momentul detecției
+        // 🔔 Adauga notificare in momentul detectiei
         await pool.query(`
           INSERT INTO notificari (mesaj, status, created_at)
           VALUES (?, 'noua', NOW())
@@ -399,10 +402,11 @@ async function verificaSiCreeazaCereriAprovizionare() {
 
     // 3. Pentru fiecare ingredient, creăm cerere
     for (const ing of ingrediente) {
-      // Opțional: verificăm dacă există deja o cerere neprocesată
+      // Optional: verificam dacă exista deja o cerere neprocesata
       const [existente] = await pool.query(
         `SELECT id FROM cereri_aprovizionare
-         WHERE ingredient_id = ? AND status = 'neprocesat'`,
+         WHERE ingredient_id = ? AND status = 'neprocesata'
+`,
         [ing.id]
       );
       if (existente.length > 0) {
@@ -414,7 +418,8 @@ async function verificaSiCreeazaCereriAprovizionare() {
     await pool.query(`
   INSERT INTO cereri_aprovizionare
   (ingredient_id, furnizor_id, cantitate_necesara, data_cerere, status)
-  VALUES (?, ?, ?, NOW(), 'neprocesat')
+  VALUES (?, ?, ?, NOW(), 'neprocesata'
+)
 `, [ing.id, ing.furnizor_id, ing.minimum_stock * 2]);
 
 

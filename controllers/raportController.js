@@ -4,7 +4,7 @@ function perioadaSQL(req, defaultInterval = "30 DAY") {
   let where = `o.created_at >= CURDATE() - INTERVAL ${defaultInterval}`;
   let params = [];
 
-  // Acceptă și startDate, endDate (camelCase din frontend)
+  // Accepta si startDate, endDate (camelCase din frontend)
   const { startDate, endDate } = req.query;
   if (startDate && endDate) {
     where = `o.created_at BETWEEN ? AND ?`;
@@ -14,7 +14,7 @@ function perioadaSQL(req, defaultInterval = "30 DAY") {
   return { where, params };
 }
 
-// 1. Vânzări
+// 1. Vanzări
 exports.vanzariUltimele30Zile = async (req, res) => {
   try {
     const { where, params } = perioadaSQL(req);
@@ -162,7 +162,7 @@ exports.dashboardInfo = async (req, res) => {
   }
 };
 
-// 6. Vânzări pe locații
+// 6. Vanzări pe locatii
 exports.vanzariPeLocatii = async (req, res) => {
   try {
     const { where, params } = perioadaSQL(req);
@@ -186,7 +186,7 @@ exports.vanzariPeLocatii = async (req, res) => {
   }
 };
 
-// 7. Vânzări într-o perioadă selectată (pentru filtrare)
+// 7. Vanzari intr-o perioada selectata (pentru filtrare)
 exports.vanzariPerioada = async (req, res) => {
   const { startDate, endDate } = req.query;
 

@@ -133,7 +133,7 @@ async function adaugaInCos(id) {
 }
 
 
-    // ✅ Adaugă în coș
+    // ✅ Adauga in coș
     const idxReal = cos.findIndex(item => item.id === id);
     if (idxReal !== -1) {
       cos[idxReal].cantitate += 1;

@@ -5,7 +5,7 @@ exports.getAllProducts = async (req, res) => {
     // Ia toate produsele
     const [produse] = await pool.query("SELECT * FROM products");
 
-    // Pentru fiecare produs, atașează rețeta (ingredientele)
+    // Pentru fiecare produs, atasează reteta (ingredientele)
     for (let produs of produse) {
       const [reteta] = await pool.query(
         `SELECT i.name AS ingredient, r.quantity AS cantitate, i.unit AS unit

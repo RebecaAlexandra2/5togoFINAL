@@ -1,7 +1,7 @@
 const pool = require("../config/db");
 const bcrypt = require("bcryptjs"); // folosește bcryptjs pentru compatibilitate
 
-// ✅ Înregistrare
+// ✅ Inregistrare
 exports.register = async (req, res) => {
   const { username, email, password } = req.body;
   if (!username || !email || !password)
@@ -50,7 +50,7 @@ exports.login = async (req, res) => {
   }
 };
 
-// ✅ Obține punctele de fidelitate pentru un client
+// ✅ Obtine punctele de fidelitate pentru un client
 exports.getFidelitatePuncte = async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -64,7 +64,7 @@ exports.getFidelitatePuncte = async (req, res) => {
   }
 };
 
-// ✅ Obține toți userii (pentru admin - coduri QR)
+// ✅ Obtine toti userii (pentru admin - coduri QR)
 exports.getAllUsers = async (req, res) => {
   try {
     const [rows] = await pool.query("SELECT id, name, role FROM users WHERE role = 'client'");
@@ -75,7 +75,7 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-// ✅ Scade puncte după aplicarea unei recompense
+// ✅ Scade puncte dupa aplicarea unei recompense
 exports.consumaPuncte = async (req, res) => {
   const { id } = req.params;
   const { puncte } = req.body;
@@ -94,7 +94,7 @@ exports.consumaPuncte = async (req, res) => {
     // Scade punctele
     await pool.query("UPDATE users SET fidelitate_tranzactii = fidelitate_tranzactii - ? WHERE id = ?", [puncte, id]);
 
-    // Înregistrează tranzacția în istoricul de fidelitate
+    // Inregistreaza tranzactia in istoricul de fidelitate
     await pool.query(
       "INSERT INTO fidelitate_tranzactii (user_id, puncte, descriere) VALUES (?, ?, ?)",
       [id, -puncte, "Puncte consumate pentru recompensă"]
@@ -107,7 +107,7 @@ exports.consumaPuncte = async (req, res) => {
   }
 };
 
-// ✅ Returnează istoricul punctelor/recompenselor clientului
+// ✅ Returneaza istoricul punctelor/recompenselor clientului
 exports.getIstoricFidelitate = async (req, res) => {
   try {
     const { id } = req.params;

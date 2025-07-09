@@ -8,7 +8,7 @@ const pool = require("../config/db");
 const facturaController = require("../controllers/facturaController");
 
 
-// =================== NOTIFICĂRI ===================
+// =================== NOTIFICARI ===================
 router.get("/notificari", verificaAutentificare, notificariController.getNotificari);
 router.get("/notificari/necitite-count", verificaAutentificare, notificariController.countNotificariNecitite);
 router.put("/notificari/:id", verificaAutentificare, notificariController.marcheazaNotificare);
@@ -17,7 +17,7 @@ router.put("/notificari/:id", verificaAutentificare, notificariController.marche
 router.get("/ingrediente", adminController.getIngrediente);
 router.put("/ingrediente/:id", adminController.updateIngredientStoc);
 
-// =================== LOCAȚII ===================
+// =================== LOCATII ===================
 router.get("/locatii", verificaAutentificare, adminController.getLocatii);
 router.post("/locatii", verificaAutentificare, adminController.adaugaLocatie);
 router.put("/locatii/:id", verificaAutentificare, adminController.updateLocatie);

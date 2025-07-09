@@ -5,7 +5,7 @@ function getCalendarParams() {
     return "";
   }
   
-  // Vânzări pe perioadă (implicit 30 zile dacă nu selectezi nimic)
+  // Vanzari pe perioada (implicit 30 zile daca nu selectezi nimic)
   async function incarcaRaport() {
     const container = document.getElementById("raport");
     container.innerHTML = "<p>Se încarcă...</p>";
@@ -53,7 +53,7 @@ function getCalendarParams() {
   }
   
   
-  // Top produse vândute
+  // Top produse vandute
   async function incarcaTopProduse() {
     const container = document.getElementById("raport");
     container.innerHTML = "<p>Se încarcă top produse...</p>";
@@ -137,7 +137,7 @@ function getCalendarParams() {
     }
   }
   
-  // Raport pe locații
+  // Raport pe locatii
   async function incarcaRaportLocatii() {
     const container = document.getElementById("raport");
     container.innerHTML = "<p>Se încarcă raportul pe locații...</p>";

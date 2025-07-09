@@ -4,7 +4,7 @@ const orderController = require("../controllers/orderController");
 const verificaAutentificare = require("../middlewares/authMiddleware");
 const { isAdmin, verificaNuEsteAdmin } = require("../middlewares/adminMiddleware");
 
-// ✅ Ruta POST - doar clienții pot plasa comenzi
+// ✅ Ruta POST - doar clientii pot plasa comenzi
 router.post(
   "/comanda",
   verificaAutentificare,
@@ -16,7 +16,7 @@ router.post(
 router.get("/verifica-stoc/:productId/:cantitate", orderController.verificaStoc);
 router.post("/verifica-stoc-complet", orderController.verificaStocComplet);
 router.post("/verifica-stoc-global-detaliat", orderController.verificaStocGlobalDetaliat);
-// ✅ Ruta PUT - confirmare comandă de către admin
+// ✅ Ruta PUT - confirmare comanda de catre admin
 router.put(
   "/orders/:order_id/confirm",
   verificaAutentificare,

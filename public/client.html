@@ -160,7 +160,7 @@ select.dropdown:focus {
 
       await reincarcaProfil();
 
-      // Toggle pentru secțiunea istoric
+      // Toggle pentru sectiunea istoric
       const btnToggle = document.getElementById("toggle-istoric");
       const sectiuneIstoric = document.getElementById("istoric");
       btnToggle.onclick = () => {
@@ -226,10 +226,10 @@ if (bauturi > 0 || reducere > 0) {
         const btn = document.getElementById("aplica-recompensa");
         if (btn) btn.onclick = aplicaRecompensa;
 
-        // Inițial secțiunea istoric este ascunsă
+        // Initial sectiunea istoric este ascunsa
         document.getElementById("istoric").style.display = "none";
 
-        // Încărcăm istoricul la început, chiar dacă e ascuns
+        // Incarcam istoricul la inceput, chiar dacă e ascuns
         await incarcaIstoric();
 
       } catch (err) {

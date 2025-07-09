@@ -26,7 +26,7 @@ exports.updateIngredientStoc = async (req, res) => {
   }
 };
 
-// ======================== LOCAȚII ========================
+// ======================== LOCATII ========================
 
 exports.getLocatii = async (req, res) => {
   try {
@@ -141,7 +141,7 @@ exports.aprovizioneazaCerere = async (req, res) => {
   try {
     await connection.beginTransaction();
 
-    // 1. Creează factura
+    // 1. Creeaza factura
     const numarFactura = "FTG-" + Date.now();
     const [facturaResult] = await connection.query(`
       INSERT INTO facturi (numar_factura, furnizor_id, total, data_factura)
@@ -151,21 +151,21 @@ exports.aprovizioneazaCerere = async (req, res) => {
     const facturaId = facturaResult.insertId;
     if (!facturaId) throw new Error("Factura nu a putut fi generată.");
 
-    // 2. Leagă cererea de factură și setează statusul la FINALIZATA
+    // 2. Leaga cererea de factura si setează statusul la FINALIZATA
     await connection.query(`
       UPDATE cereri_aprovizionare
       SET status = 'finalizata', factura_id = ?
       WHERE id = ?
     `, [facturaId, cerereId]);
 
-    // 3. Actualizează stocul ingredientului
+    // 3. Actualizeaza stocul ingredientului
     await connection.query(`
       UPDATE ingredients
       SET stock_quantity = stock_quantity + ?
       WHERE id = ?
     `, [cantitate, ingredientId]);
 
-    // 4. Adaugă linia în factura_produse
+    // 4. Adauga linia in factura_produse
     await connection.query(`
       INSERT INTO factura_produse (factura_id, ingredient_id, cantitate)
       VALUES (?, ?, ?)
